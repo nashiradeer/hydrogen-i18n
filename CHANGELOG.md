@@ -1,4 +1,14 @@
-# Hydrogen: I18n // Changelog
+# Hydrogen I18n // Changelog
+
+## [Unreleased]
+
+### Changed
+
+- Update 'serenity' to 0.12.0.
+
+### Removed
+
+- Support for non-std environments.
 
 ## [1.0.1] - 2023-07-28
 
