@@ -1,5 +1,9 @@
 {
     "cSpell.words": [
+        "docsrs",
         "struct"
+    ],
+    "rust-analyzer.cargo.features": [
+        "serenity"
     ]
 }
