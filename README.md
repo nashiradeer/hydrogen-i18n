@@ -6,8 +6,10 @@ Translation utilities for server-side applications that need to deals with diffe
 ](https://www.paypal.com/donate/?business=QQGMTC3FQAJF6&no_recurring=0&item_name=Thanks+for+donating+for+me%2C+this+helps+me+a+lot+to+continue+developing+and+maintaining+my+projects.&currency_code=USD)
 [![GitHub Sponsor](https://img.shields.io/badge/GitHub%20Sponsor-181717?style=for-the-badge&logo=github&logoColor=%23fff)
 ](https://github.com/sponsors/nashiradeer)
-[![Discord](https://img.shields.io/badge/Discord%20Bot-5865F2?style=for-the-badge&logo=discord&logoColor=%23fff)](https://discord.com/api/oauth2/authorize?client_id=1128087591179268116&permissions=275417975808&scope=bot+applications.commands)
-[![Docker](https://img.shields.io/docker/v/nashiradeer/hydrogen?style=for-the-badge&logo=docker&logoColor=%23fff&label=Docker&labelColor=%23000&color=%232496ED)](https://hub.docker.com/r/nashiradeer/hydrogen)
+[![Crates.io](https://img.shields.io/crates/v/hydrogen-i18n?style=for-the-badge&logo=rust&logoColor=%23fff&label=Crates.io&labelColor=%23000&color=%23000)
+](https://crates.io/crates/hydrogen-i18n)
+[![docs.rs](https://img.shields.io/docsrs/hydrogen-i18n?style=for-the-badge&logo=docsdotrs&logoColor=%23fff&label=Docs.rs&labelColor=%23000&color=%23000)
+](https://docs.rs/hydrogen-i18n/)
 
 Server-side applications that deal directly with users will need to be prepared to deal with different languages too, so Hydrogen I18n comes with utilities focused to make this task easier, loading and managing all the languages supported by the application in the memory, avoiding unnecessary disk and CPU usage.
 
