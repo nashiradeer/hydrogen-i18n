@@ -5,6 +5,9 @@
 ### Changed
 
 - Update 'serenity' to 0.12.0.
+- Rename 'HydrogenI18n' to 'I18n', refactoring it.
+- Set 'doc_cfg' feature when in docsrs.
+- Set 'missing_docs' attribute as warn.
 
 ### Removed
 
