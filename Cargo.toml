@@ -7,15 +7,15 @@ description = "In-memory translation manager designed for use by Discord apps an
 repository = "https://github.com/nashiradeer/hydrogen"
 readme = "README.md"
 license = "MIT"
-keywords = ["discord", "hydrogen", "i18n", "language", "l10n"]
-categories = ["internationalization", "localization", "no-std"]
+keywords = ["hydrogen", "i18n", "language", "l10n", "translation"]
+categories = ["internationalization", "localization"]
 
 [features]
 default = []
 serenity = ["dep:serenity"]
 
 [dependencies]
-serde_json = { version = "1.0.99", optional = true }
+serde_json = "1.0.99"
 
 [dependencies.serenity]
 package = "serenity"
