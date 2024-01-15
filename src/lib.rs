@@ -26,9 +26,9 @@
 
 use std::{
     collections::HashMap,
-    fs::{DirEntry, File},
+    fs::File,
     io::{self, Read},
-    path::{Path, PathBuf},
+    path::Path,
     result,
 };
 
