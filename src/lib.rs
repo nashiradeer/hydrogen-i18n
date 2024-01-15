@@ -27,12 +27,12 @@
 use std::{
     collections::HashMap,
     fs::File,
-    io::{self, Read},
+    io::{self, BufReader, Read},
     path::Path,
     result,
 };
 
-/// Re-export of the `serde_json` crate.
+/// Re-export of the `serde_json` crate used by Hydrogen I18n.
 pub use serde_json;
 
 /// Groups all the errors that can be returned by Hydrogen I18n.
@@ -46,22 +46,22 @@ pub enum Error {
 /// A result with the error type of Hydrogen I18n.
 pub type Result<T> = result::Result<T, Error>;
 
-/// A group of translations.
+/// A single category containing translations as key-value pairs.
 pub type Category = HashMap<String, String>;
-/// Translations for a language.
+/// A single language made of categories.
 pub type Language = HashMap<String, Category>;
 
-/// Translation manager, used to load and manage all the languages supported.
+/// Translation manager, used to load and manage all languages in the memory.
 #[derive(Clone, Default)]
 pub struct I18n {
-    /// All languages loaded and available in this manager.
+    /// All languages managed by this instance.
     pub languages: HashMap<String, Language>,
-    /// The default language.
+    /// The default language. Used as fallback when a language, category or key is not found.
     pub default: Language,
 }
 
 impl I18n {
-    /// Creates a new instance of the manager, proving the default language and the languages already loaded.
+    /// Creates a new instance of the manager, proving the default language and the languages that will be managed.
     pub fn new_with_default_and_languages(
         default: Language,
         languages: HashMap<String, Language>,
@@ -74,7 +74,7 @@ impl I18n {
         Self::new_with_default_and_languages(default, HashMap::new())
     }
 
-    /// Creates a new instance of the manager, proving the languages already loaded.
+    /// Creates a new instance of the manager, proving the languages that will be managed.
     pub fn new_with_languages(languages: HashMap<String, Language>) -> Self {
         Self::new_with_default_and_languages(HashMap::new(), languages)
     }
@@ -84,28 +84,28 @@ impl I18n {
         Self::new_with_default_and_languages(HashMap::new(), HashMap::new())
     }
 
-    /// Loads a language from a `&str` formatted as Hydrogen I18n's JSON.
+    /// Loads a language from a `&str` of Hydrogen I18n's JSON.
     pub fn from_str(&mut self, language: &str, data: &str) -> serde_json::Result<()> {
         let parsed_language = serde_json::from_str(data)?;
         self.languages.insert(language.to_owned(), parsed_language);
         Ok(())
     }
 
-    /// Loads a language from a struct that implements [Read] and reads something that can be parsed as Hydrogen I18n's JSON.
+    /// Loads a language from a I/O stream of Hydrogen I18n's JSON.
     pub fn from_reader<R: Read>(&mut self, language: &str, reader: R) -> serde_json::Result<()> {
         let parsed_language = serde_json::from_reader(reader)?;
         self.languages.insert(language.to_owned(), parsed_language);
         Ok(())
     }
 
-    /// Loads a language from a `&[u8]` formatted as Hydrogen I18n's JSON.
+    /// Loads a language from a `&[u8]` of Hydrogen I18n's JSON.
     pub fn from_slice(&mut self, language: &str, data: &[u8]) -> serde_json::Result<()> {
         let parsed_language = serde_json::from_slice(data)?;
         self.languages.insert(language.to_owned(), parsed_language);
         Ok(())
     }
 
-    /// Loads a language from a [serde_json::Value] compatible with Hydrogen I18n's JSON.
+    /// Loads a language from a [serde_json::Value] of Hydrogen I18n's JSON.
     pub fn from_value(
         &mut self,
         language: &str,
@@ -136,13 +136,17 @@ impl I18n {
         true
     }
 
-    /// Loads a language from a file with the content formatted as Hydrogen I18n's JSON.
+    /// Loads a language from a file of Hydrogen I18n's JSON.
     pub fn from_file<P: AsRef<Path>>(&mut self, language: &str, path: P) -> Result<()> {
         let file = File::open(path).map_err(Error::Io)?;
-        self.from_reader(language, file).map_err(Error::Json)
+        let buffered_reader = BufReader::new(file);
+        self.from_reader(language, buffered_reader)
+            .map_err(Error::Json)
     }
 
-    /// Loads a language from a directory containing files with the content formatted as Hydrogen I18n's JSON.
+    /// Loads all languages from a directory containing files of Hydrogen I18n's JSON, ignoring files that give errors.
+    ///
+    /// When loading a language, the file name will be used as the language name.
     pub fn from_dir<P: AsRef<Path>>(&mut self, path: P) -> Result<()> {
         for entry in path.as_ref().read_dir().map_err(Error::Io)? {
             if let Ok(file) = entry {
@@ -158,5 +162,33 @@ impl I18n {
         }
 
         Ok(())
+    }
+
+    /// Gets the translation for category and key using the default language.
+    pub fn translate_default(&self, category: &str, key: &str) -> String {
+        let Some(category_map) = self.default.get(category) else {
+            return format!("{}.{}", category, key);
+        };
+
+        category_map
+            .get(key)
+            .map(|f| f.clone())
+            .unwrap_or(format!("{}.{}", category, key))
+    }
+
+    /// Gets the translation for category and key using the specified language.
+    pub fn translate(&self, language: &str, category: &str, key: &str) -> String {
+        let Some(language_map) = self.languages.get(language) else {
+            return self.translate_default(category, key);
+        };
+
+        let Some(category_map) = language_map.get(category) else {
+            return self.translate_default(category, key);
+        };
+
+        category_map
+            .get(key)
+            .map(|f| f.clone())
+            .unwrap_or_else(|| self.translate_default(category, key))
     }
 }

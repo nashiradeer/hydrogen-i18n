@@ -4,16 +4,17 @@
 
 ### Added
 
-- Create loaders used internally.
-- Create file loader.
-- Create directory loader.
+- Create internal parsers.
 
 ### Changed
 
-- Update 'serenity' to 0.12.0.
+- Refactor file loader.
+- Refactor directory loader.
+- Refactor getters (translate and translate_default).
 - Rename 'HydrogenI18n' to 'I18n', refactoring it.
 - Set 'doc_cfg' feature when in docsrs.
 - Set 'missing_docs' attribute as warn.
+- Update 'serenity' to 0.12.0.
 
 ### Removed
 
