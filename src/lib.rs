@@ -35,6 +35,9 @@ use std::{
 /// Re-export of the `serde_json` crate used by Hydrogen I18n.
 pub use serde_json;
 
+#[cfg(feature = "serenity")]
+use serenity::builder::{CreateCommand, CreateCommandOption};
+
 /// Groups all the errors that can be returned by Hydrogen I18n.
 pub enum Error {
     /// An error related to IO.
@@ -177,18 +180,84 @@ impl I18n {
     }
 
     /// Gets the translation for category and key using the specified language.
-    pub fn translate(&self, language: &str, category: &str, key: &str) -> String {
-        let Some(language_map) = self.languages.get(language) else {
-            return self.translate_default(category, key);
-        };
-
-        let Some(category_map) = language_map.get(category) else {
-            return self.translate_default(category, key);
-        };
-
-        category_map
+    pub fn translate_option(&self, language: &str, category: &str, key: &str) -> Option<String> {
+        self.languages
+            .get(language)?
+            .get(category)?
             .get(key)
             .map(|f| f.clone())
-            .unwrap_or_else(|| self.translate_default(category, key))
+    }
+
+    /// Gets the translation for category and key using the specified language, falling back to the default language.
+    pub fn translate(&self, language: &str, category: &str, key: &str) -> String {
+        self.translate_option(language, category, key)
+            .unwrap_or(self.translate_default(category, key))
+    }
+}
+
+#[cfg(feature = "serenity")]
+impl I18n {
+    /// Inserts all the translations of a category and key from the languages managed by this instance into a [CreateCommand] as localized names.
+    pub fn serenity_command_name(
+        &self,
+        category: &str,
+        key: &str,
+        mut command: CreateCommand,
+    ) -> CreateCommand {
+        for lang in self.languages.keys() {
+            if let Some(translation) = self.translate_option(lang, category, key) {
+                command = command.name_localized(lang, translation);
+            }
+        }
+
+        command
+    }
+
+    /// Inserts all the translations of a category and key from the languages managed by this instance into a [CreateCommand] as localized descriptions.
+    pub fn serenity_command_description(
+        &self,
+        category: &str,
+        key: &str,
+        mut command: CreateCommand,
+    ) -> CreateCommand {
+        for lang in self.languages.keys() {
+            if let Some(translation) = self.translate_option(lang, category, key) {
+                command = command.description_localized(lang, translation);
+            }
+        }
+
+        command
+    }
+
+    /// Inserts all the translations of a category and key from the languages managed by this instance into a [CreateCommandOption] as localized names.
+    pub fn serenity_command_option_name(
+        &self,
+        category: &str,
+        key: &str,
+        mut command_option: CreateCommandOption,
+    ) -> CreateCommandOption {
+        for lang in self.languages.keys() {
+            if let Some(translation) = self.translate_option(lang, category, key) {
+                command_option = command_option.name_localized(lang, translation);
+            }
+        }
+
+        command_option
+    }
+
+    /// Inserts all the translations of a category and key from the languages managed by this instance into a [CreateCommandOption] as localized descriptions.
+    pub fn serenity_command_option_description(
+        &self,
+        category: &str,
+        key: &str,
+        mut command_option: CreateCommandOption,
+    ) -> CreateCommandOption {
+        for lang in self.languages.keys() {
+            if let Some(translation) = self.translate_option(lang, category, key) {
+                command_option = command_option.description_localized(lang, translation);
+            }
+        }
+
+        command_option
     }
 }
