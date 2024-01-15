@@ -24,7 +24,7 @@
 //!
 //! Hydrogen I18n is a Nashira Deer's project licensed under the [MIT License](https://github.com/nashiradeer/hydrogen-i18n/blob/main/LICENSE.txt) and licensed under the [GNU Lesser General Public License v3](https://github.com/nashiradeer/hydrogen-i18n/blob/c00b016356dc9263571e6cc6ede87969bf31bf02/LICENSE.txt) until v1.0.1.
 
-use std::collections::HashMap;
+use std::{collections::HashMap, io::Read};
 
 /// Re-export of the `serde_json` crate.
 pub use serde_json;
@@ -38,9 +38,9 @@ pub type Language = HashMap<String, Category>;
 #[derive(Clone, Default)]
 pub struct I18n {
     /// All languages loaded and available in this manager.
-    languages: HashMap<String, Language>,
+    pub languages: HashMap<String, Language>,
     /// The default language.
-    default: Language,
+    pub default: Language,
 }
 
 impl I18n {
@@ -65,5 +65,57 @@ impl I18n {
     /// Creates a new instance of the manager.
     pub fn new() -> Self {
         Self::new_with_default_and_languages(HashMap::new(), HashMap::new())
+    }
+
+    /// Loads a language from a `&str` formatted as Hydrogen I18n's JSON.
+    pub fn from_str(&mut self, language: &str, data: &str) -> serde_json::Result<()> {
+        let parsed_language = serde_json::from_str(data)?;
+        self.languages.insert(language.to_owned(), parsed_language);
+        Ok(())
+    }
+
+    /// Loads a language from a struct that implements [Read] and reads something that can be parsed as Hydrogen I18n's JSON.
+    pub fn from_reader<R: Read>(&mut self, language: &str, reader: R) -> serde_json::Result<()> {
+        let parsed_language = serde_json::from_reader(reader)?;
+        self.languages.insert(language.to_owned(), parsed_language);
+        Ok(())
+    }
+
+    /// Loads a language from a `&[u8]` formatted as Hydrogen I18n's JSON.
+    pub fn from_slice(&mut self, language: &str, data: &[u8]) -> serde_json::Result<()> {
+        let parsed_language = serde_json::from_slice(data)?;
+        self.languages.insert(language.to_owned(), parsed_language);
+        Ok(())
+    }
+
+    /// Loads a language from a [serde_json::Value] compatible with Hydrogen I18n's JSON.
+    pub fn from_value(
+        &mut self,
+        language: &str,
+        data: serde_json::Value,
+    ) -> serde_json::Result<()> {
+        let parsed_language = serde_json::from_value(data)?;
+        self.languages.insert(language.to_owned(), parsed_language);
+        Ok(())
+    }
+
+    /// Sets the default language from the languages already loaded.
+    ///
+    /// If deduplicate is `true`, the language will be removed instead of cloned.
+    ///
+    /// Returns `true` if the language was found and set as default.
+    pub fn set_default(&mut self, language: &str, deduplicate: bool) -> bool {
+        let Some(language) = ({
+            if deduplicate {
+                self.languages.remove(language)
+            } else {
+                self.languages.get(language).cloned()
+            }
+        }) else {
+            return false;
+        };
+
+        self.default = language;
+        true
     }
 }
