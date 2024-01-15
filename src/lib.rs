@@ -24,10 +24,27 @@
 //!
 //! Hydrogen I18n is a Nashira Deer's project licensed under the [MIT License](https://github.com/nashiradeer/hydrogen-i18n/blob/main/LICENSE.txt) and licensed under the [GNU Lesser General Public License v3](https://github.com/nashiradeer/hydrogen-i18n/blob/c00b016356dc9263571e6cc6ede87969bf31bf02/LICENSE.txt) until v1.0.1.
 
-use std::{collections::HashMap, io::Read};
+use std::{
+    collections::HashMap,
+    fs::{DirEntry, File},
+    io::{self, Read},
+    path::{Path, PathBuf},
+    result,
+};
 
 /// Re-export of the `serde_json` crate.
 pub use serde_json;
+
+/// Groups all the errors that can be returned by Hydrogen I18n.
+pub enum Error {
+    /// An error related to IO.
+    Io(io::Error),
+    /// An error related to JSON parsing.
+    Json(serde_json::Error),
+}
+
+/// A result with the error type of Hydrogen I18n.
+pub type Result<T> = result::Result<T, Error>;
 
 /// A group of translations.
 pub type Category = HashMap<String, String>;
@@ -118,4 +135,30 @@ impl I18n {
         self.default = language;
         true
     }
+
+    /// Loads a language from a file with the content formatted as Hydrogen I18n's JSON.
+    pub fn from_file<P: AsRef<Path>>(&mut self, language: &str, path: P) -> Result<()> {
+        let file = File::open(path).map_err(Error::Io)?;
+        self.from_reader(language, file).map_err(Error::Json)
+    }
+
+    /// Loads a language from a directory containing files with the content formatted as Hydrogen I18n's JSON.
+    pub fn from_dir<P: AsRef<Path>>(&mut self, path: P) -> Result<()> {
+        for entry in path.as_ref().read_dir().map_err(Error::Io)? {
+            if let Ok(file) = entry {
+                if let Some((language, path)) = from_dir_file(file) {
+                    _ = self.from_file(&language, path);
+                }
+            }
+        }
+
+        Ok(())
+    }
+}
+
+/// Used internally to get the language and path from a directory entry.
+fn from_dir_file<'a>(entry: DirEntry) -> Option<(String, PathBuf)> {
+    let path = entry.path();
+    let language = path.file_stem()?.to_str()?.to_owned();
+    Some((language, path))
 }
