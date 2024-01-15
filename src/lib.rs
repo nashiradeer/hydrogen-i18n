@@ -146,7 +146,12 @@ impl I18n {
     pub fn from_dir<P: AsRef<Path>>(&mut self, path: P) -> Result<()> {
         for entry in path.as_ref().read_dir().map_err(Error::Io)? {
             if let Ok(file) = entry {
-                if let Some((language, path)) = from_dir_file(file) {
+                let path = file.path();
+                if let Some(language) = path
+                    .file_stem()
+                    .map(|s| s.to_str().map(|f| f.to_owned()))
+                    .flatten()
+                {
                     _ = self.from_file(&language, path);
                 }
             }
@@ -154,11 +159,4 @@ impl I18n {
 
         Ok(())
     }
-}
-
-/// Used internally to get the language and path from a directory entry.
-fn from_dir_file<'a>(entry: DirEntry) -> Option<(String, PathBuf)> {
-    let path = entry.path();
-    let language = path.file_stem()?.to_str()?.to_owned();
-    Some((language, path))
 }
