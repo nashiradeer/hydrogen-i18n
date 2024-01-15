@@ -13,6 +13,7 @@ categories = ["internationalization", "localization"]
 [features]
 default = []
 serenity = ["dep:serenity"]
+twilight = ["dep:twilight-http", "dep:twilight-util"]
 
 [dependencies]
 serde_json = "1.0.99"
@@ -23,3 +24,15 @@ version = "0.12.0"
 optional = true
 default-features = false
 features = ["builder"]
+
+[dependencies.twilight-http]
+package = "twilight-http"
+version = "0.15.4"
+optional = true
+default-features = false
+
+[dependencies.twilight-util]
+package = "twilight-util"
+version = "0.15.4"
+optional = true
+default-features = false
