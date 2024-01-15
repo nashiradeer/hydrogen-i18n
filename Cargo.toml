@@ -11,9 +11,7 @@ keywords = ["hydrogen", "i18n", "language", "l10n", "translation"]
 categories = ["internationalization", "localization"]
 
 [features]
-default = []
-serenity = ["dep:serenity"]
-twilight = ["dep:twilight-http", "dep:twilight-util"]
+twilight = ["dep:twilight-http", "dep:twilight-util", "dep:twilight-validate"]
 
 [dependencies]
 serde_json = "1.0.99"
@@ -36,3 +34,11 @@ package = "twilight-util"
 version = "0.15.4"
 optional = true
 default-features = false
+
+[dependencies.twilight-validate]
+package = "twilight-validate"
+version = "0.15.3"
+optional = true
+default-features = false
+default = []
+serenity = ["dep:serenity"]
