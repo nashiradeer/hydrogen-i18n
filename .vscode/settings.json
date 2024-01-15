@@ -4,6 +4,7 @@
         "struct"
     ],
     "rust-analyzer.cargo.features": [
-        "serenity"
+        "serenity",
+        "twilight"
     ]
 }
