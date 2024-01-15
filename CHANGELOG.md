@@ -5,12 +5,14 @@
 ### Added
 
 - Create internal parsers.
+- Create 'translation_option' function.
 
 ### Changed
 
 - Refactor file loader.
 - Refactor directory loader.
 - Refactor getters (translate and translate_default).
+- Refactor 'serenity' support.
 - Rename 'HydrogenI18n' to 'I18n', refactoring it.
 - Set 'doc_cfg' feature when in docsrs.
 - Set 'missing_docs' attribute as warn.
