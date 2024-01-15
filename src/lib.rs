@@ -159,4 +159,32 @@ impl I18n {
 
         Ok(())
     }
+
+    /// Gets the translation for category and key using the default language.
+    pub fn translate_default(&self, category: &str, key: &str) -> String {
+        let Some(category_map) = self.default.get(category) else {
+            return format!("{}.{}", category, key);
+        };
+
+        category_map
+            .get(key)
+            .map(|f| f.clone())
+            .unwrap_or(format!("{}.{}", category, key))
+    }
+
+    /// Gets the translation for category and key using the specified language.
+    pub fn translate(&self, language: &str, category: &str, key: &str) -> String {
+        let Some(language_map) = self.languages.get(language) else {
+            return self.translate_default(category, key);
+        };
+
+        let Some(category_map) = language_map.get(category) else {
+            return self.translate_default(category, key);
+        };
+
+        category_map
+            .get(key)
+            .map(|f| f.clone())
+            .unwrap_or_else(|| self.translate_default(category, key))
+    }
 }
