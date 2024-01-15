@@ -27,7 +27,7 @@
 use std::{
     collections::HashMap,
     fs::File,
-    io::{self, Read},
+    io::{self, BufReader, Read},
     path::Path,
     result,
 };
@@ -139,7 +139,9 @@ impl I18n {
     /// Loads a language from a file of Hydrogen I18n's JSON.
     pub fn from_file<P: AsRef<Path>>(&mut self, language: &str, path: P) -> Result<()> {
         let file = File::open(path).map_err(Error::Io)?;
-        self.from_reader(language, file).map_err(Error::Json)
+        let buffered_reader = BufReader::new(file);
+        self.from_reader(language, buffered_reader)
+            .map_err(Error::Json)
     }
 
     /// Loads all languages from a directory containing files of Hydrogen I18n's JSON, ignoring files that give errors.
