@@ -5,6 +5,8 @@
 ### Added
 
 - Create loaders used internally.
+- Create file loader.
+- Create directory loader.
 
 ### Changed
 
