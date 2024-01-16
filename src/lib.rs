@@ -21,6 +21,7 @@
 //! ## Features
 //!
 //! - `serenity`: Enables functions that make it easy to use the library in Discord apps and bots built with [serenity](https://crates.io/crates/serenity).
+//! - `tokio`: Enables [tokio](https://crates.io/crates/tokio)-based async loaders.
 //!
 //! ## Credits
 //!
@@ -41,6 +42,9 @@ pub use serde_json;
 #[cfg(feature = "serenity")]
 use serenity::builder::{CreateCommand, CreateCommandOption};
 
+#[cfg(feature = "tokio")]
+use tokio::io::AsyncReadExt;
+
 /// Groups all the errors that can be returned by Hydrogen I18n.
 #[derive(Debug)]
 pub enum Error {
@@ -55,6 +59,10 @@ pub enum Error {
 
     /// An error related to UTF-8 parsing.
     Utf8(std::str::Utf8Error),
+
+    #[cfg(feature = "tokio")]
+    /// An error related to Tokio.
+    Tokio(tokio::task::JoinError),
 }
 
 impl Display for Error {
@@ -66,6 +74,9 @@ impl Display for Error {
                 write!(f, "Language {} not found", language)
             }
             Self::Utf8(error) => write!(f, "UTF-8 error: {}", error),
+
+            #[cfg(feature = "tokio")]
+            Self::Tokio(error) => write!(f, "Tokio error: {}", error),
         }
     }
 }
@@ -140,7 +151,11 @@ impl I18n {
 
     /// Loads a language or a link from a `&str` of Hydrogen I18n's JSON.
     ///
+    /// ## Arguments
+    ///
     /// If check_link is `true` and the language is a link, it will check if the language exists.
+    ///
+    /// If deduplicate is `true`, translations and categories equal to the default language will be removed.
     pub fn from_str(
         &mut self,
         language: &str,
@@ -171,6 +186,12 @@ impl I18n {
 
     /// Loads a language from a I/O stream of Hydrogen I18n's JSON.
     ///
+    /// ## Arguments
+    ///
+    /// If deduplicate is `true`, translations and categories equal to the default language will be removed.
+    ///
+    /// ## Notes
+    ///
     /// This function can't check if the language is a link, so it will always parse the data as a language.
     pub fn from_reader<R: Read>(
         &mut self,
@@ -190,6 +211,12 @@ impl I18n {
     }
 
     /// Loads a language from a `&[u8]` of Hydrogen I18n's JSON.
+    ///
+    /// ## Arguments
+    ///
+    /// If check_link is `true` and the language is a link, it will check if the language exists.
+    ///
+    /// If deduplicate is `true`, translations and categories equal to the default language will be removed.
     pub fn from_slice(
         &mut self,
         language: &str,
@@ -221,6 +248,10 @@ impl I18n {
     }
 
     /// Loads a language from a [serde_json::Value] of Hydrogen I18n's JSON.
+    ///
+    /// ## Arguments
+    ///
+    /// If deduplicate is `true`, translations and categories equal to the default language will be removed.
     pub fn from_value(
         &mut self,
         language: &str,
@@ -240,11 +271,17 @@ impl I18n {
 
     /// Sets the default language from the languages already loaded.
     ///
-    /// This function will fail if the language is a link.
+    /// ## Arguments
     ///
     /// If deduplicate is `true`, the language will be removed instead of cloned.
     ///
-    /// Returns `true` if the language was found and set as default.
+    /// ## Returns
+    ///
+    /// `true` if the language was found and set as default.
+    ///
+    /// ## Notes
+    ///
+    /// This function will fail if the language is a link.
     pub fn set_default(&mut self, language: &str, deduplicate: bool) -> bool {
         let Some(Language::Data(language)) = ({
             if deduplicate {
@@ -261,6 +298,10 @@ impl I18n {
     }
 
     /// Loads a language from a file of Hydrogen I18n's JSON.
+    ///
+    /// ## Arguments
+    ///
+    /// If deduplicate is `true`, translations and categories equal to the default language will be removed.
     pub fn from_file<P: AsRef<Path>>(
         &mut self,
         language: &str,
@@ -274,6 +315,12 @@ impl I18n {
     }
 
     /// Loads all languages from a directory containing files of Hydrogen I18n's JSON, ignoring files that give errors.
+    ///
+    /// ## Arguments
+    ///
+    /// If deduplicate is `true`, translations and categories equal to the default language will be removed.
+    ///
+    /// ## Notes
     ///
     /// When loading a language, the file name will be used as the language name.
     ///
@@ -297,9 +344,17 @@ impl I18n {
 
     /// Loads all languages from a directory containing files of Hydrogen I18n's JSON, ignoring files that give errors.
     ///
-    /// This function considers the file extension as your content type, *.json for languages and *.link for links.
+    /// ## Arguments
     ///
     /// If check_link is `true` when loading a link, it will check if the language exists.
+    ///
+    /// If deduplicate is `true`, translations and categories equal to the default language will be removed.
+    ///
+    /// ## Notes
+    ///
+    /// When loading a language, the file name will be used as the language name.
+    ///
+    /// This function considers the file extension as your content type, *.json for languages and *.link for links.
     pub fn from_dir_with_links<P: AsRef<Path>>(
         &mut self,
         path: P,
@@ -352,7 +407,9 @@ impl I18n {
 
     /// Gets a language resolving link.
     ///
-    /// Returns `None` if the language doesn't exist, if link isn't valid or if the link points to another link.
+    /// ## Returns
+    ///
+    /// `None` if the language doesn't exist, if link isn't valid or if the link points to another link.
     pub fn get_language(&self, language: &str) -> Option<&HashMap<String, Category>> {
         match self.languages.get(language)? {
             Language::Link(link) => {
@@ -531,5 +588,147 @@ impl I18n {
         }
 
         command_option
+    }
+}
+
+#[cfg(feature = "tokio")]
+impl I18n {
+    /// Loads a language or a link from a file of Hydrogen I18n's JSON using Tokio.
+    ///
+    /// ## Arguments
+    ///
+    /// If deduplicate is `true`, translations and categories equal to the default language will be removed.
+    ///
+    /// ## Notes
+    ///
+    /// Internally uses [tokio::task::spawn_blocking] to load and parse the file.
+    ///
+    /// Deduplication can't be done in another thread using Tokio, so it will be executed in the current thread.
+    pub async fn tokio_from_file<P: AsRef<Path> + std::marker::Send + 'static>(
+        &mut self,
+        language: &str,
+        path: P,
+        deduplicate: bool,
+    ) -> Result<()> {
+        let mut parsed_language = tokio::task::spawn_blocking(|| {
+            let file = File::open(path).map_err(Error::Io)?;
+            let buffered_reader = BufReader::new(file);
+
+            serde_json::from_reader(buffered_reader).map_err(Error::Json)
+        })
+        .await
+        .map_err(Error::Tokio)??;
+
+        if deduplicate {
+            self.deduplicate(&mut parsed_language);
+        }
+
+        self.languages
+            .insert(language.to_owned(), Language::Data(parsed_language));
+
+        Ok(())
+    }
+
+    /// Loads all languages from a directory containing files of Hydrogen I18n's JSON, ignoring files that give errors.
+    ///
+    /// ## Arguments
+    ///
+    /// If deduplicate is `true`, translations and categories equal to the default language will be removed.
+    ///
+    /// ## Notes
+    ///
+    /// When loading a language, the file name will be used as the language name.
+    ///
+    /// All files loaded will be parsed as languages, ignoring links.
+    ///
+    /// Internally uses [tokio::task::spawn_blocking] to load and parse the file.
+    ///
+    /// Deduplication can't be done in another thread using Tokio, so it will be executed in the current thread.
+    pub async fn tokio_from_dir<P: AsRef<Path>>(
+        &mut self,
+        path: P,
+        deduplicate: bool,
+    ) -> Result<()> {
+        for entry in path.as_ref().read_dir().map_err(Error::Io)? {
+            if let Ok(file) = entry {
+                let path = file.path();
+                if let Some(language) = path
+                    .file_stem()
+                    .map(|s| s.to_str().map(|f| f.to_owned()))
+                    .flatten()
+                {
+                    _ = self.tokio_from_file(&language, path, deduplicate).await;
+                }
+            }
+        }
+
+        Ok(())
+    }
+
+    /// Loads all languages from a directory containing files of Hydrogen I18n's JSON, ignoring files that give errors.
+    ///
+    /// ## Arguments
+    ///
+    /// If check_link is `true` when loading a link, it will check if the language exists.
+    ///
+    /// If deduplicate is `true`, translations and categories equal to the default language will be removed.
+    ///
+    /// ## Notes
+    ///
+    /// When loading a language, the file name will be used as the language name.
+    ///
+    /// This function considers the file extension as your content type, *.json for languages and *.link for links.
+    ///
+    /// Internally uses [tokio::task::spawn_blocking] to load and parse the file.
+    ///
+    /// Deduplication can't be done in another thread using Tokio, so it will be executed in the current thread.
+    pub async fn tokio_from_dir_with_links<P: AsRef<Path>>(
+        &mut self,
+        path: P,
+        check_link: bool,
+        deduplicate: bool,
+    ) -> Result<()> {
+        for entry in path.as_ref().read_dir().map_err(Error::Io)? {
+            if let Ok(file) = entry {
+                let path = file.path();
+
+                match file.path().extension().map(|s| s.to_str()).flatten() {
+                    Some("json") => {
+                        if let Some(language) = path
+                            .file_stem()
+                            .map(|s| s.to_str().map(|f| f.to_owned()))
+                            .flatten()
+                        {
+                            _ = self.tokio_from_file(&language, path, deduplicate).await;
+                        }
+                    }
+                    Some("link") => {
+                        if let Some(language) = path
+                            .file_stem()
+                            .map(|s| s.to_str().map(|f| f.to_owned()))
+                            .flatten()
+                        {
+                            let file = tokio::fs::File::open(path).await.map_err(Error::Io)?;
+                            let mut data = String::new();
+                            let Ok(_) = file.take(16).read_to_string(&mut data).await else {
+                                continue;
+                            };
+
+                            if let Some(link) = data.strip_prefix("_link:") {
+                                if check_link && !self.languages.contains_key(link) {
+                                    continue;
+                                }
+
+                                self.languages
+                                    .insert(language.to_owned(), Language::Link(link.to_owned()));
+                            }
+                        }
+                    }
+                    Some(_) | None => {}
+                }
+            }
+        }
+
+        Ok(())
     }
 }

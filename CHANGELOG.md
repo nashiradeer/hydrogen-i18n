@@ -4,6 +4,7 @@
 
 ### Added
 
+- Add support `tokio`-based async functions.
 - Create a way to link language.
 - Create deduplicate function.
 - Create internal parsers.
