@@ -61,6 +61,7 @@ pub enum Error {
     Utf8(std::str::Utf8Error),
 
     #[cfg(feature = "tokio")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "tokio")))]
     /// An error related to Tokio.
     Tokio(tokio::task::JoinError),
 }
@@ -533,6 +534,7 @@ impl Iterator for Iter<'_> {
 }
 
 #[cfg(feature = "serenity")]
+#[cfg_attr(docsrs, doc(cfg(feature = "serenity")))]
 impl I18n {
     /// Inserts all the translations of a category and key from the languages managed by this instance into a [CreateCommand] as localized names.
     pub fn serenity_command_name(
@@ -592,6 +594,7 @@ impl I18n {
 }
 
 #[cfg(feature = "tokio")]
+#[cfg_attr(docsrs, doc(cfg(feature = "tokio")))]
 impl I18n {
     /// Loads a language or a link from a file of Hydrogen I18n's JSON using Tokio.
     ///
