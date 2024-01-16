@@ -120,10 +120,34 @@ impl I18n {
         Self::new_with_default_and_languages(HashMap::new(), HashMap::new())
     }
 
+    /// Removes all the translations that are equal to the default translation.
+    pub fn deduplicate(&self, language: &mut HashMap<String, Category>) {
+        language.retain(|category_name, category| {
+            category.retain(|key, value| {
+                if let Some(default_translation) = self.translate_default_option(category_name, key)
+                {
+                    if default_translation == *value {
+                        return false;
+                    }
+                }
+
+                true
+            });
+
+            !category.is_empty()
+        });
+    }
+
     /// Loads a language or a link from a `&str` of Hydrogen I18n's JSON.
     ///
     /// If check_link is `true` and the language is a link, it will check if the language exists.
-    pub fn from_str(&mut self, language: &str, data: &str, check_link: bool) -> Result<()> {
+    pub fn from_str(
+        &mut self,
+        language: &str,
+        data: &str,
+        check_link: bool,
+        deduplicate: bool,
+    ) -> Result<()> {
         if let Some(link) = data.strip_prefix("_link:") {
             if check_link && !self.languages.contains_key(link) {
                 return Err(Error::LanguageNotFound(link.to_owned()));
@@ -132,7 +156,12 @@ impl I18n {
             self.languages
                 .insert(language.to_owned(), Language::Link(link.to_owned()));
         } else {
-            let parsed_language = serde_json::from_str(data).map_err(Error::Json)?;
+            let mut parsed_language = serde_json::from_str(data).map_err(Error::Json)?;
+
+            if deduplicate {
+                self.deduplicate(&mut parsed_language);
+            }
+
             self.languages
                 .insert(language.to_owned(), Language::Data(parsed_language));
         }
@@ -143,15 +172,31 @@ impl I18n {
     /// Loads a language from a I/O stream of Hydrogen I18n's JSON.
     ///
     /// This function can't check if the language is a link, so it will always parse the data as a language.
-    pub fn from_reader<R: Read>(&mut self, language: &str, reader: R) -> serde_json::Result<()> {
-        let parsed_language = serde_json::from_reader(reader)?;
+    pub fn from_reader<R: Read>(
+        &mut self,
+        language: &str,
+        reader: R,
+        deduplicate: bool,
+    ) -> serde_json::Result<()> {
+        let mut parsed_language = serde_json::from_reader(reader)?;
+
+        if deduplicate {
+            self.deduplicate(&mut parsed_language);
+        }
+
         self.languages
             .insert(language.to_owned(), Language::Data(parsed_language));
         Ok(())
     }
 
     /// Loads a language from a `&[u8]` of Hydrogen I18n's JSON.
-    pub fn from_slice(&mut self, language: &str, data: &[u8], check_link: bool) -> Result<()> {
+    pub fn from_slice(
+        &mut self,
+        language: &str,
+        data: &[u8],
+        check_link: bool,
+        deduplicate: bool,
+    ) -> Result<()> {
         if let Some(link) = data.strip_prefix("_link:".as_bytes()) {
             let link_str = std::str::from_utf8(link).map_err(Error::Utf8)?;
 
@@ -162,7 +207,12 @@ impl I18n {
             self.languages
                 .insert(language.to_owned(), Language::Link(link_str.to_owned()));
         } else {
-            let parsed_language = serde_json::from_slice(data).map_err(Error::Json)?;
+            let mut parsed_language = serde_json::from_slice(data).map_err(Error::Json)?;
+
+            if deduplicate {
+                self.deduplicate(&mut parsed_language);
+            }
+
             self.languages
                 .insert(language.to_owned(), Language::Data(parsed_language));
         }
@@ -175,8 +225,14 @@ impl I18n {
         &mut self,
         language: &str,
         data: serde_json::Value,
+        deduplicate: bool,
     ) -> serde_json::Result<()> {
-        let parsed_language = serde_json::from_value(data)?;
+        let mut parsed_language = serde_json::from_value(data)?;
+
+        if deduplicate {
+            self.deduplicate(&mut parsed_language);
+        }
+
         self.languages
             .insert(language.to_owned(), Language::Data(parsed_language));
         Ok(())
@@ -205,10 +261,15 @@ impl I18n {
     }
 
     /// Loads a language from a file of Hydrogen I18n's JSON.
-    pub fn from_file<P: AsRef<Path>>(&mut self, language: &str, path: P) -> Result<()> {
+    pub fn from_file<P: AsRef<Path>>(
+        &mut self,
+        language: &str,
+        path: P,
+        deduplicate: bool,
+    ) -> Result<()> {
         let file = File::open(path).map_err(Error::Io)?;
         let buffered_reader = BufReader::new(file);
-        self.from_reader(language, buffered_reader)
+        self.from_reader(language, buffered_reader, deduplicate)
             .map_err(Error::Json)
     }
 
@@ -217,7 +278,7 @@ impl I18n {
     /// When loading a language, the file name will be used as the language name.
     ///
     /// All files loaded will be parsed as languages, ignoring links.
-    pub fn from_dir<P: AsRef<Path>>(&mut self, path: P) -> Result<()> {
+    pub fn from_dir<P: AsRef<Path>>(&mut self, path: P, deduplicate: bool) -> Result<()> {
         for entry in path.as_ref().read_dir().map_err(Error::Io)? {
             if let Ok(file) = entry {
                 let path = file.path();
@@ -226,7 +287,7 @@ impl I18n {
                     .map(|s| s.to_str().map(|f| f.to_owned()))
                     .flatten()
                 {
-                    _ = self.from_file(&language, path);
+                    _ = self.from_file(&language, path, deduplicate);
                 }
             }
         }
@@ -239,7 +300,12 @@ impl I18n {
     /// This function considers the file extension as your content type, *.json for languages and *.link for links.
     ///
     /// If check_link is `true` when loading a link, it will check if the language exists.
-    pub fn from_dir_with_links<P: AsRef<Path>>(&mut self, path: P, check_link: bool) -> Result<()> {
+    pub fn from_dir_with_links<P: AsRef<Path>>(
+        &mut self,
+        path: P,
+        check_link: bool,
+        deduplicate: bool,
+    ) -> Result<()> {
         for entry in path.as_ref().read_dir().map_err(Error::Io)? {
             if let Ok(file) = entry {
                 let path = file.path();
@@ -251,7 +317,7 @@ impl I18n {
                             .map(|s| s.to_str().map(|f| f.to_owned()))
                             .flatten()
                         {
-                            _ = self.from_file(&language, path);
+                            _ = self.from_file(&language, path, deduplicate);
                         }
                     }
                     Some("link") => {
