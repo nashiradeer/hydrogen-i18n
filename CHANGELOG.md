@@ -4,6 +4,7 @@
 
 ### Added
 
+- Create a way to link language.
 - Create internal parsers.
 - Create 'translation_option' function.
 
