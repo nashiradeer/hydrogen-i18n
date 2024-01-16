@@ -25,7 +25,7 @@
 //! Hydrogen I18n is a Nashira Deer's project licensed under the [MIT License](https://github.com/nashiradeer/hydrogen-i18n/blob/main/LICENSE.txt) and licensed under the [GNU Lesser General Public License v3](https://github.com/nashiradeer/hydrogen-i18n/blob/c00b016356dc9263571e6cc6ede87969bf31bf02/LICENSE.txt) until v1.0.1.
 
 use std::{
-    collections::HashMap,
+    collections::{hash_map, HashMap},
     fs::File,
     io::{self, BufReader, Read},
     path::Path,
@@ -168,14 +168,13 @@ impl I18n {
     }
 
     /// Gets the translation for category and key using the default language.
-    pub fn translate_default(&self, category: &str, key: &str) -> String {
-        let Some(category_map) = self.default.get(category) else {
-            return format!("{}.{}", category, key);
-        };
+    pub fn translate_default_option(&self, category: &str, key: &str) -> Option<String> {
+        self.default.get(category)?.get(key).map(|f| f.clone())
+    }
 
-        category_map
-            .get(key)
-            .map(|f| f.clone())
+    /// Gets the translation for category and key using the default language, falling back to the format `category.key`.
+    pub fn translate_default(&self, category: &str, key: &str) -> String {
+        self.translate_default_option(category, key)
             .unwrap_or(format!("{}.{}", category, key))
     }
 
@@ -193,6 +192,43 @@ impl I18n {
         self.translate_option(language, category, key)
             .unwrap_or(self.translate_default(category, key))
     }
+
+    /// Gets all the translations of a category and key from the languages managed by this instance.
+    pub fn translate_all<'a>(&'a self, category: &'a str, key: &'a str) -> Iter<'_> {
+        Iter {
+            languages: self.languages.iter(),
+            category,
+            key,
+        }
+    }
+}
+
+/// An iterator over all the translations of a category and key.
+#[derive(Clone)]
+pub struct Iter<'a> {
+    languages: hash_map::Iter<'a, String, Language>,
+    category: &'a str,
+    key: &'a str,
+}
+
+impl Iterator for Iter<'_> {
+    type Item = (String, String);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        loop {
+            let (language, language_map) = self.languages.next()?;
+
+            let Some(category_map) = language_map.get(self.category) else {
+                continue;
+            };
+
+            let Some(translation) = category_map.get(self.key) else {
+                continue;
+            };
+
+            return Some((language.clone(), translation.clone()));
+        }
+    }
 }
 
 #[cfg(feature = "serenity")]
@@ -204,10 +240,8 @@ impl I18n {
         key: &str,
         mut command: CreateCommand,
     ) -> CreateCommand {
-        for lang in self.languages.keys() {
-            if let Some(translation) = self.translate_option(lang, category, key) {
-                command = command.name_localized(lang, translation);
-            }
+        for (language, translation) in self.translate_all(category, key) {
+            command = command.name_localized(language, translation);
         }
 
         command
@@ -220,10 +254,8 @@ impl I18n {
         key: &str,
         mut command: CreateCommand,
     ) -> CreateCommand {
-        for lang in self.languages.keys() {
-            if let Some(translation) = self.translate_option(lang, category, key) {
-                command = command.description_localized(lang, translation);
-            }
+        for (language, translation) in self.translate_all(category, key) {
+            command = command.description_localized(language, translation);
         }
 
         command
@@ -236,10 +268,8 @@ impl I18n {
         key: &str,
         mut command_option: CreateCommandOption,
     ) -> CreateCommandOption {
-        for lang in self.languages.keys() {
-            if let Some(translation) = self.translate_option(lang, category, key) {
-                command_option = command_option.name_localized(lang, translation);
-            }
+        for (language, translation) in self.translate_all(category, key) {
+            command_option = command_option.name_localized(language, translation);
         }
 
         command_option
@@ -252,10 +282,8 @@ impl I18n {
         key: &str,
         mut command_option: CreateCommandOption,
     ) -> CreateCommandOption {
-        for lang in self.languages.keys() {
-            if let Some(translation) = self.translate_option(lang, category, key) {
-                command_option = command_option.description_localized(lang, translation);
-            }
+        for (language, translation) in self.translate_all(category, key) {
+            command_option = command_option.description_localized(language, translation);
         }
 
         command_option
