@@ -261,9 +261,8 @@ impl I18n {
                             .flatten()
                         {
                             let file = File::open(path).map_err(Error::Io)?;
-                            let mut buffered_reader = BufReader::new(file);
                             let mut data = String::new();
-                            let Ok(_) = buffered_reader.read_to_string(&mut data) else {
+                            let Ok(_) = file.take(16).read_to_string(&mut data) else {
                                 continue;
                             };
 
