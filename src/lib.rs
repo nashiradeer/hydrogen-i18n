@@ -28,6 +28,7 @@
 
 use std::{
     collections::{hash_map, HashMap},
+    fmt::{self, Display, Formatter},
     fs::File,
     io::{self, BufReader, Read},
     path::Path,
@@ -41,11 +42,32 @@ pub use serde_json;
 use serenity::builder::{CreateCommand, CreateCommandOption};
 
 /// Groups all the errors that can be returned by Hydrogen I18n.
+#[derive(Debug)]
 pub enum Error {
     /// An error related to IO.
     Io(io::Error),
+
     /// An error related to JSON parsing.
     Json(serde_json::Error),
+
+    /// The language was not found.
+    LanguageNotFound(String),
+
+    /// An error related to UTF-8 parsing.
+    Utf8(std::str::Utf8Error),
+}
+
+impl Display for Error {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Io(error) => write!(f, "IO error: {}", error),
+            Self::Json(error) => write!(f, "JSON error: {}", error),
+            Self::LanguageNotFound(language) => {
+                write!(f, "Language {} not found", language)
+            }
+            Self::Utf8(error) => write!(f, "UTF-8 error: {}", error),
+        }
+    }
 }
 
 /// A result with the error type of Hydrogen I18n.
@@ -53,29 +75,38 @@ pub type Result<T> = result::Result<T, Error>;
 
 /// A single category containing translations as key-value pairs.
 pub type Category = HashMap<String, String>;
-/// A single language made of categories.
-pub type Language = HashMap<String, Category>;
+
+/// A language containing categories as key-value pairs or a link to another language.
+#[derive(Clone)]
+pub enum Language {
+    /// A link to another language.
+    Link(String),
+
+    /// A language containing categories as key-value pairs.
+    Data(HashMap<String, Category>),
+}
 
 /// Translation manager, used to load and manage all languages in the memory.
 #[derive(Clone, Default)]
 pub struct I18n {
     /// All languages managed by this instance.
     pub languages: HashMap<String, Language>,
+
     /// The default language. Used as fallback when a language, category or key is not found.
-    pub default: Language,
+    pub default: HashMap<String, Category>,
 }
 
 impl I18n {
     /// Creates a new instance of the manager, proving the default language and the languages that will be managed.
     pub fn new_with_default_and_languages(
-        default: Language,
+        default: HashMap<String, Category>,
         languages: HashMap<String, Language>,
     ) -> Self {
         Self { languages, default }
     }
 
     /// Creates a new instance of the manager, proving the default language.
-    pub fn new_with_default(default: Language) -> Self {
+    pub fn new_with_default(default: HashMap<String, Category>) -> Self {
         Self::new_with_default_and_languages(default, HashMap::new())
     }
 
@@ -89,24 +120,53 @@ impl I18n {
         Self::new_with_default_and_languages(HashMap::new(), HashMap::new())
     }
 
-    /// Loads a language from a `&str` of Hydrogen I18n's JSON.
-    pub fn from_str(&mut self, language: &str, data: &str) -> serde_json::Result<()> {
-        let parsed_language = serde_json::from_str(data)?;
-        self.languages.insert(language.to_owned(), parsed_language);
+    /// Loads a language or a link from a `&str` of Hydrogen I18n's JSON.
+    ///
+    /// If check_link is `true` and the language is a link, it will check if the language exists.
+    pub fn from_str(&mut self, language: &str, data: &str, check_link: bool) -> Result<()> {
+        if let Some(link) = data.strip_prefix("_link:") {
+            if check_link && !self.languages.contains_key(link) {
+                return Err(Error::LanguageNotFound(link.to_owned()));
+            }
+
+            self.languages
+                .insert(language.to_owned(), Language::Link(link.to_owned()));
+        } else {
+            let parsed_language = serde_json::from_str(data).map_err(Error::Json)?;
+            self.languages
+                .insert(language.to_owned(), Language::Data(parsed_language));
+        }
+
         Ok(())
     }
 
     /// Loads a language from a I/O stream of Hydrogen I18n's JSON.
+    ///
+    /// This function can't check if the language is a link, so it will always parse the data as a language.
     pub fn from_reader<R: Read>(&mut self, language: &str, reader: R) -> serde_json::Result<()> {
         let parsed_language = serde_json::from_reader(reader)?;
-        self.languages.insert(language.to_owned(), parsed_language);
+        self.languages
+            .insert(language.to_owned(), Language::Data(parsed_language));
         Ok(())
     }
 
     /// Loads a language from a `&[u8]` of Hydrogen I18n's JSON.
-    pub fn from_slice(&mut self, language: &str, data: &[u8]) -> serde_json::Result<()> {
-        let parsed_language = serde_json::from_slice(data)?;
-        self.languages.insert(language.to_owned(), parsed_language);
+    pub fn from_slice(&mut self, language: &str, data: &[u8], check_link: bool) -> Result<()> {
+        if let Some(link) = data.strip_prefix("_link:".as_bytes()) {
+            let link_str = std::str::from_utf8(link).map_err(Error::Utf8)?;
+
+            if check_link && !self.languages.contains_key(link_str) {
+                return Err(Error::LanguageNotFound(link_str.to_owned()));
+            }
+
+            self.languages
+                .insert(language.to_owned(), Language::Link(link_str.to_owned()));
+        } else {
+            let parsed_language = serde_json::from_slice(data).map_err(Error::Json)?;
+            self.languages
+                .insert(language.to_owned(), Language::Data(parsed_language));
+        }
+
         Ok(())
     }
 
@@ -117,17 +177,20 @@ impl I18n {
         data: serde_json::Value,
     ) -> serde_json::Result<()> {
         let parsed_language = serde_json::from_value(data)?;
-        self.languages.insert(language.to_owned(), parsed_language);
+        self.languages
+            .insert(language.to_owned(), Language::Data(parsed_language));
         Ok(())
     }
 
     /// Sets the default language from the languages already loaded.
     ///
+    /// This function will fail if the language is a link.
+    ///
     /// If deduplicate is `true`, the language will be removed instead of cloned.
     ///
     /// Returns `true` if the language was found and set as default.
     pub fn set_default(&mut self, language: &str, deduplicate: bool) -> bool {
-        let Some(language) = ({
+        let Some(Language::Data(language)) = ({
             if deduplicate {
                 self.languages.remove(language)
             } else {
@@ -152,6 +215,8 @@ impl I18n {
     /// Loads all languages from a directory containing files of Hydrogen I18n's JSON, ignoring files that give errors.
     ///
     /// When loading a language, the file name will be used as the language name.
+    ///
+    /// All files loaded will be parsed as languages, ignoring links.
     pub fn from_dir<P: AsRef<Path>>(&mut self, path: P) -> Result<()> {
         for entry in path.as_ref().read_dir().map_err(Error::Io)? {
             if let Ok(file) = entry {
@@ -169,6 +234,73 @@ impl I18n {
         Ok(())
     }
 
+    /// Loads all languages from a directory containing files of Hydrogen I18n's JSON, ignoring files that give errors.
+    ///
+    /// This function considers the file extension as your content type, *.json for languages and *.link for links.
+    ///
+    /// If check_link is `true` when loading a link, it will check if the language exists.
+    pub fn from_dir_with_links<P: AsRef<Path>>(&mut self, path: P, check_link: bool) -> Result<()> {
+        for entry in path.as_ref().read_dir().map_err(Error::Io)? {
+            if let Ok(file) = entry {
+                let path = file.path();
+
+                match file.path().extension().map(|s| s.to_str()).flatten() {
+                    Some("json") => {
+                        if let Some(language) = path
+                            .file_stem()
+                            .map(|s| s.to_str().map(|f| f.to_owned()))
+                            .flatten()
+                        {
+                            _ = self.from_file(&language, path);
+                        }
+                    }
+                    Some("link") => {
+                        if let Some(language) = path
+                            .file_stem()
+                            .map(|s| s.to_str().map(|f| f.to_owned()))
+                            .flatten()
+                        {
+                            let file = File::open(path).map_err(Error::Io)?;
+                            let mut buffered_reader = BufReader::new(file);
+                            let mut data = String::new();
+                            let Ok(_) = buffered_reader.read_to_string(&mut data) else {
+                                continue;
+                            };
+
+                            if let Some(link) = data.strip_prefix("_link:") {
+                                if check_link && !self.languages.contains_key(link) {
+                                    continue;
+                                }
+
+                                self.languages
+                                    .insert(language.to_owned(), Language::Link(link.to_owned()));
+                            }
+                        }
+                    }
+                    Some(_) | None => {}
+                }
+            }
+        }
+
+        Ok(())
+    }
+
+    /// Gets a language resolving link.
+    ///
+    /// Returns `None` if the language doesn't exist, if link isn't valid or if the link points to another link.
+    pub fn get_language(&self, language: &str) -> Option<&HashMap<String, Category>> {
+        match self.languages.get(language)? {
+            Language::Link(link) => {
+                let link = self.languages.get(link)?;
+                match link {
+                    Language::Link(_) => None,
+                    Language::Data(language) => Some(language),
+                }
+            }
+            Language::Data(language) => Some(language),
+        }
+    }
+
     /// Gets the translation for category and key using the default language.
     pub fn translate_default_option(&self, category: &str, key: &str) -> Option<String> {
         self.default.get(category)?.get(key).map(|f| f.clone())
@@ -182,8 +314,7 @@ impl I18n {
 
     /// Gets the translation for category and key using the specified language.
     pub fn translate_option(&self, language: &str, category: &str, key: &str) -> Option<String> {
-        self.languages
-            .get(language)?
+        self.get_language(language)?
             .get(category)?
             .get(key)
             .map(|f| f.clone())
@@ -199,17 +330,51 @@ impl I18n {
     pub fn translate_all<'a>(&'a self, category: &'a str, key: &'a str) -> Iter<'_> {
         Iter {
             languages: self.languages.iter(),
+            i18n: self,
             category,
             key,
         }
     }
+
+    /// Removes all the links that points to another link or to a language that doesn't exist.
+    pub fn cleanup_links(&mut self) {
+        let mut languages = HashMap::new();
+        let mut link_languages = Vec::new();
+
+        for (language_name, language) in self.languages.drain() {
+            match language {
+                Language::Link(link) => {
+                    link_languages.push((language_name, link));
+                }
+                Language::Data(language) => {
+                    languages.insert(language_name, Language::Data(language));
+                }
+            }
+        }
+
+        for (language_name, link) in link_languages {
+            if let Some(Language::Data(_)) = languages.get(&link) {
+                languages.insert(language_name, Language::Link(link));
+            }
+        }
+
+        self.languages = languages;
+    }
 }
 
-/// An iterator over all the translations of a category and key.
+/// An iterator over all the translations of a category and key, ignores invalid links or links that points to another link.
 #[derive(Clone)]
 pub struct Iter<'a> {
+    /// A iterator over all the languages managed by this instance.
     languages: hash_map::Iter<'a, String, Language>,
+
+    /// A reference to the manager.
+    i18n: &'a I18n,
+
+    /// The category to get the translations.
     category: &'a str,
+
+    /// The key to get the translations.
     key: &'a str,
 }
 
@@ -218,17 +383,29 @@ impl Iterator for Iter<'_> {
 
     fn next(&mut self) -> Option<Self::Item> {
         loop {
-            let (language, language_map) = self.languages.next()?;
+            let (language_name, language) = match self.languages.next()? {
+                (language_name, Language::Link(link)) => {
+                    if let Some(language) = self.i18n.languages.get(link) {
+                        match language {
+                            Language::Link(_) => continue,
+                            Language::Data(language) => (language_name, language),
+                        }
+                    } else {
+                        continue;
+                    }
+                }
+                (language_name, Language::Data(language)) => (language_name, language),
+            };
 
-            let Some(category_map) = language_map.get(self.category) else {
+            let Some(category) = language.get(self.category) else {
                 continue;
             };
 
-            let Some(translation) = category_map.get(self.key) else {
+            let Some(translation) = category.get(self.key) else {
                 continue;
             };
 
-            return Some((language.clone(), translation.clone()));
+            return Some((language_name.to_owned(), translation.to_owned()));
         }
     }
 }
