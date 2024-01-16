@@ -5,6 +5,7 @@
 ### Added
 
 - Create a way to link language.
+- Create deduplicate function.
 - Create internal parsers.
 - Create 'translation_option' function.
 
