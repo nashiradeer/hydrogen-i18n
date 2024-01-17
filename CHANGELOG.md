@@ -1,12 +1,12 @@
 # Hydrogen I18n // Changelog
 
-## [Unreleased]
+## [2.0.0] - 2024-01-17
 
 ### Added
 
 - Add support `simd-json` crate.
 - Add support `tokio`-based async functions.
-- Create a way to link language.
+- Create a way to link languages.
 - Create deduplicate function.
 - Create internal parsers.
 - Create 'translation_option' function.
