@@ -39,6 +39,11 @@ use std::{
 /// Re-export of the `serde_json` crate used by Hydrogen I18n.
 pub use serde_json;
 
+#[cfg(feature = "simd")]
+#[cfg_attr(docsrs, doc(cfg(feature = "simd")))]
+/// Re-export of the `simd_json` crate used by Hydrogen I18n.
+pub use simd_json;
+
 #[cfg(feature = "serenity")]
 use serenity::builder::{CreateCommand, CreateCommandOption};
 
@@ -64,6 +69,11 @@ pub enum Error {
     #[cfg_attr(docsrs, doc(cfg(feature = "tokio")))]
     /// An error related to Tokio.
     Tokio(tokio::task::JoinError),
+
+    #[cfg(feature = "simd")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "simd")))]
+    /// An error related to SIMD JSON parsing.
+    SimdJson(simd_json::Error),
 }
 
 impl Display for Error {
@@ -78,6 +88,9 @@ impl Display for Error {
 
             #[cfg(feature = "tokio")]
             Self::Tokio(error) => write!(f, "Tokio error: {}", error),
+
+            #[cfg(feature = "simd")]
+            Self::SimdJson(error) => write!(f, "SIMD JSON error: {}", error),
         }
     }
 }
@@ -172,7 +185,14 @@ impl I18n {
             self.languages
                 .insert(language.to_owned(), Language::Link(link.to_owned()));
         } else {
+            #[cfg(not(feature = "simd"))]
             let mut parsed_language = serde_json::from_str(data).map_err(Error::Json)?;
+
+            #[cfg(feature = "simd")]
+            let mut parsed_language = unsafe {
+                let mut data_cloned = data.to_owned();
+                simd_json::from_str(&mut data_cloned).map_err(Error::SimdJson)
+            }?;
 
             if deduplicate {
                 self.deduplicate(&mut parsed_language);
@@ -199,8 +219,12 @@ impl I18n {
         language: &str,
         reader: R,
         deduplicate: bool,
-    ) -> serde_json::Result<()> {
-        let mut parsed_language = serde_json::from_reader(reader)?;
+    ) -> Result<()> {
+        #[cfg(not(feature = "simd"))]
+        let mut parsed_language = serde_json::from_reader(reader).map_err(Error::Json)?;
+
+        #[cfg(feature = "simd")]
+        let mut parsed_language = simd_json::from_reader(reader).map_err(Error::SimdJson)?;
 
         if deduplicate {
             self.deduplicate(&mut parsed_language);
@@ -235,7 +259,14 @@ impl I18n {
             self.languages
                 .insert(language.to_owned(), Language::Link(link_str.to_owned()));
         } else {
+            #[cfg(not(feature = "simd"))]
             let mut parsed_language = serde_json::from_slice(data).map_err(Error::Json)?;
+
+            #[cfg(feature = "simd")]
+            let mut parsed_language = {
+                let mut data = data.to_owned();
+                simd_json::from_slice(&mut data).map_err(Error::SimdJson)
+            }?;
 
             if deduplicate {
                 self.deduplicate(&mut parsed_language);
@@ -312,7 +343,6 @@ impl I18n {
         let file = File::open(path).map_err(Error::Io)?;
         let buffered_reader = BufReader::new(file);
         self.from_reader(language, buffered_reader, deduplicate)
-            .map_err(Error::Json)
     }
 
     /// Loads all languages from a directory containing files of Hydrogen I18n's JSON, ignoring files that give errors.
@@ -617,7 +647,13 @@ impl I18n {
             let file = File::open(path).map_err(Error::Io)?;
             let buffered_reader = BufReader::new(file);
 
-            serde_json::from_reader(buffered_reader).map_err(Error::Json)
+            #[cfg(not(feature = "simd"))]
+            let data = serde_json::from_reader(buffered_reader).map_err(Error::Json);
+
+            #[cfg(feature = "simd")]
+            let data = simd_json::from_reader(buffered_reader).map_err(Error::SimdJson);
+
+            data
         })
         .await
         .map_err(Error::Tokio)??;
