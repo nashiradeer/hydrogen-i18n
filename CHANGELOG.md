@@ -4,6 +4,7 @@
 
 ### Added
 
+- Add support `simd-json` crate.
 - Add support `tokio`-based async functions.
 - Create a way to link language.
 - Create deduplicate function.
