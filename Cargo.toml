@@ -1,6 +1,6 @@
 [package]
 name = "hydrogen-i18n"
-version = "2.0.0"
+version = "2.1.0"
 authors = ["Nashira Deer <nashiradeer@gmail.com>"]
 edition = "2021"
 description = "Translation utilities for server-side applications that need to deals with different languages on the same time."
