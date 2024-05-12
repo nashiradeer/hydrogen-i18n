@@ -21,9 +21,13 @@ jobs:
         run: rustup install ${{ env.RUST_VERSION }}
       - name: Set Rust  ${{ env.RUST_VERSION }} as default
         run: rustup default ${{ env.RUST_VERSION }}
-      - name: Check
+      - name: Check with default features
+        run: cargo check --config 'build.rustflags = ["-Dwarnings"]'
+      - name: Check with all features
         run: cargo check --config 'build.rustflags = ["-Dwarnings"]' --all-features
       - name: Install Clippy
         run: rustup component add clippy
-      - name: Run Clippy
+      - name: Run Clippy with default features
+        run: cargo clippy --config 'build.rustflags = ["-Dwarnings"]'
+      - name: Run Clippy with all features
         run: cargo clippy --config 'build.rustflags = ["-Dwarnings"]' --all-features
