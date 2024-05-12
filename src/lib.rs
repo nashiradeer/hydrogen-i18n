@@ -692,16 +692,13 @@ impl I18n {
         path: P,
         deduplicate: bool,
     ) -> Result<()> {
-        for entry in path.as_ref().read_dir().map_err(Error::Io)? {
-            if let Ok(file) = entry {
-                let path = file.path();
-                if let Some(language) = path
-                    .file_stem()
-                    .map(|s| s.to_str().map(|f| f.to_owned()))
-                    .flatten()
-                {
-                    _ = self.tokio_from_file(&language, path, deduplicate).await;
-                }
+        for entry in (path.as_ref().read_dir().map_err(Error::Io)?).flatten() {
+            let path = entry.path();
+            if let Some(language) = path
+                .file_stem()
+                .and_then(|s| s.to_str().map(|f| f.to_owned()))
+            {
+                _ = self.tokio_from_file(&language, path, deduplicate).await;
             }
         }
 
@@ -731,44 +728,40 @@ impl I18n {
         check_link: bool,
         deduplicate: bool,
     ) -> Result<()> {
-        for entry in path.as_ref().read_dir().map_err(Error::Io)? {
-            if let Ok(file) = entry {
-                let path = file.path();
+        for entry in (path.as_ref().read_dir().map_err(Error::Io)?).flatten() {
+            let path = entry.path();
 
-                match file.path().extension().map(|s| s.to_str()).flatten() {
-                    Some("json") => {
-                        if let Some(language) = path
-                            .file_stem()
-                            .map(|s| s.to_str().map(|f| f.to_owned()))
-                            .flatten()
-                        {
-                            _ = self.tokio_from_file(&language, path, deduplicate).await;
-                        }
+            match entry.path().extension().and_then(|s| s.to_str()) {
+                Some("json") => {
+                    if let Some(language) = path
+                        .file_stem()
+                        .and_then(|s| s.to_str().map(|f| f.to_owned()))
+                    {
+                        _ = self.tokio_from_file(&language, path, deduplicate).await;
                     }
-                    Some("link") => {
-                        if let Some(language) = path
-                            .file_stem()
-                            .map(|s| s.to_str().map(|f| f.to_owned()))
-                            .flatten()
-                        {
-                            let file = tokio::fs::File::open(path).await.map_err(Error::Io)?;
-                            let mut data = String::new();
-                            let Ok(_) = file.take(16).read_to_string(&mut data).await else {
-                                continue;
-                            };
-
-                            if let Some(link) = data.strip_prefix("_link:") {
-                                if check_link && !self.languages.contains_key(link) {
-                                    continue;
-                                }
-
-                                self.languages
-                                    .insert(language.to_owned(), Language::Link(link.to_owned()));
-                            }
-                        }
-                    }
-                    Some(_) | None => {}
                 }
+                Some("link") => {
+                    if let Some(language) = path
+                        .file_stem()
+                        .and_then(|s| s.to_str().map(|f| f.to_owned()))
+                    {
+                        let file = tokio::fs::File::open(path).await.map_err(Error::Io)?;
+                        let mut data = String::new();
+                        let Ok(_) = file.take(16).read_to_string(&mut data).await else {
+                            continue;
+                        };
+
+                        if let Some(link) = data.strip_prefix("_link:") {
+                            if check_link && !self.languages.contains_key(link) {
+                                continue;
+                            }
+
+                            self.languages
+                                .insert(language.to_owned(), Language::Link(link.to_owned()));
+                        }
+                    }
+                }
+                Some(_) | None => {}
             }
         }
 
