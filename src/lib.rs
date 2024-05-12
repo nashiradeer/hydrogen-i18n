@@ -164,6 +164,16 @@ impl I18n {
         });
     }
 
+    /// Removes all the translations that are equal to the default translation from all languages managed by this instance.
+    pub fn deduplicate_all(&mut self) {
+        for language in self.languages.values_mut() {
+            match language {
+                Language::Link(_) => {}
+                Language::Data(language) => deduplicate_language(&self.default, language),
+            }
+        }
+    }
+
     /// Loads a language or a link from a `&str` of Hydrogen I18n's JSON.
     ///
     /// ## Arguments
@@ -771,4 +781,33 @@ impl I18n {
 
         Ok(())
     }
+}
+
+/// Removes all the translations that are equal to the base language.
+fn deduplicate_language(
+    base: &HashMap<String, Category>,
+    deduplicating: &mut HashMap<String, Category>,
+) {
+    deduplicating.retain(|category_name, category| {
+        category.retain(|key, value| {
+            if let Some(default_translation) = resolve_translation(base, category_name, key) {
+                if *default_translation == *value {
+                    return false;
+                }
+            }
+
+            true
+        });
+
+        !category.is_empty()
+    });
+}
+
+/// Resolves category and key to a translation without getting the ownership.
+fn resolve_translation<'a>(
+    language: &'a HashMap<String, Category>,
+    category: &str,
+    key: &str,
+) -> Option<&'a String> {
+    language.get(category)?.get(key)
 }

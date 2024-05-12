@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- Create a function to deduplicate all languages. ([#11](https://github.com/nashiradeer/hydrogen-i18n/issues/11))
+
 ### Fixed
 
 - Document the `simd` feature. ([#12](https://github.com/nashiradeer/hydrogen-i18n/issues/12))
