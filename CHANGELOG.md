@@ -7,7 +7,7 @@
 - Add support `simd-json` crate.
 - Add support `tokio`-based async functions.
 - Create a way to link languages.
-- Create deduplicate function.
+- Create the deduplicate function.
 - Create internal parsers.
 - Create 'translation_option' function.
 
@@ -18,8 +18,8 @@
 - Refactor getters (translate and translate_default).
 - Refactor 'serenity' support.
 - Rename 'HydrogenI18n' to 'I18n', refactoring it.
-- Set 'doc_cfg' feature when in docsrs.
-- Set 'missing_docs' attribute as warn.
+- Set the 'doc_cfg' feature when in docsrs.
+- Set the 'missing_docs' attribute as warn.
 - Update 'serenity' to 0.12.0.
 
 ### Removed
@@ -37,7 +37,7 @@
 ### Added
 
 - File and directory loading functions.
-- Internal types used by `Translator` to store translations.
+- Internal types that are used by the `Translator` to store translations.
 - `Translator` struct for managing translations.
 - Support for environments without the `std`.
 - Utility functions for Serenity.
