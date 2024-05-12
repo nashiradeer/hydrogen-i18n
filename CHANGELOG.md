@@ -34,7 +34,7 @@
 
 ## [1.0.1] - 2023-07-28
 
-### Fixes
+### Fixed
 
 - `Result` and `Error` are only used with `std` feature, but are available without them.
 
