@@ -9,6 +9,7 @@ readme = "README.md"
 license = "MIT"
 keywords = ["hydrogen", "i18n", "language", "l10n", "translation"]
 categories = ["internationalization", "localization"]
+rust-version = "1.75"
 
 [features]
 default = []
