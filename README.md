@@ -23,6 +23,7 @@ Consider donating to make Hydrogen I18n development possible. You can donate thr
 
 - `serenity`: Enables functions that make it easy to use the library in Discord apps and bots built with [serenity](https://crates.io/crates/serenity).
 - `tokio`: Enables [tokio](https://crates.io/crates/tokio)-based async loaders.
+- `simd`: Use [simd-json](https://crates.io/crates/simd-json) instead of [serde_json](https://crates.io/crates/serde_json).
 
 ## Credits
 

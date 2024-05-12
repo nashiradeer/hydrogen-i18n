@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- Document the `simd` feature.
+
 ## [2.0.0] - 2024-01-17
 
 ### Added
