@@ -4,7 +4,7 @@
 
 ### Fixed
 
-- Document the `simd` feature.
+- Document the `simd` feature. ([#12](https://github.com/nashiradeer/hydrogen-i18n/issues/12))
 
 ## [2.0.0] - 2024-01-17
 
