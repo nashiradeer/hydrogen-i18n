@@ -36,3 +36,7 @@ features = ["fs"]
 version = "0.13.7"
 optional = true
 features = ["serde_impl"]
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
