@@ -37,19 +37,13 @@ use std::{
     result,
 };
 
-/// Re-export of the `serde_json` crate used by Hydrogen I18n.
-pub use serde_json;
-
-#[cfg(feature = "simd")]
-#[cfg_attr(docsrs, doc(cfg(feature = "simd")))]
-/// Re-export of the `simd_json` crate used by Hydrogen I18n.
-pub use simd_json;
-
 #[cfg(feature = "serenity")]
 use serenity::builder::{CreateCommand, CreateCommandOption};
 
 #[cfg(feature = "tokio")]
 use tokio::io::AsyncReadExt;
+
+pub mod builders;
 
 /// Groups all the errors that can be returned by Hydrogen I18n.
 #[derive(Debug)]
@@ -62,6 +56,9 @@ pub enum Error {
 
     /// The language was not found.
     LanguageNotFound(String),
+
+    /// An invalid file name.
+    InvalidFileName,
 
     /// An error related to UTF-8 parsing.
     Utf8(std::str::Utf8Error),
@@ -82,6 +79,7 @@ impl Display for Error {
         match self {
             Self::Io(error) => write!(f, "IO error: {}", error),
             Self::Json(error) => write!(f, "JSON error: {}", error),
+            Self::InvalidFileName => write!(f, "Invalid file name"),
             Self::LanguageNotFound(language) => {
                 write!(f, "Language {} not found", language)
             }
@@ -123,7 +121,13 @@ pub struct I18n {
 }
 
 impl I18n {
+    /// Creates a new instance of the manager using the builder pattern.
+    pub fn builder() -> builders::I18nBuilder {
+        Default::default()
+    }
+
     /// Creates a new instance of the manager, proving the default language and the languages that will be managed.
+    #[deprecated(since = "2.2.0", note = "Use `builder` instead")]
     pub fn new_with_default_and_languages(
         default: HashMap<String, Category>,
         languages: HashMap<String, Language>,
@@ -132,21 +136,28 @@ impl I18n {
     }
 
     /// Creates a new instance of the manager, proving the default language.
+    #[deprecated(since = "2.2.0", note = "Use `builder` instead")]
     pub fn new_with_default(default: HashMap<String, Category>) -> Self {
+        #[allow(deprecated)]
         Self::new_with_default_and_languages(default, HashMap::new())
     }
 
     /// Creates a new instance of the manager, proving the languages that will be managed.
+    #[deprecated(since = "2.2.0", note = "Use `builder` instead")]
     pub fn new_with_languages(languages: HashMap<String, Language>) -> Self {
+        #[allow(deprecated)]
         Self::new_with_default_and_languages(HashMap::new(), languages)
     }
 
     /// Creates a new instance of the manager.
+    #[deprecated(since = "2.2.0", note = "Use `builder` instead")]
     pub fn new() -> Self {
+        #[allow(deprecated)]
         Self::new_with_default_and_languages(HashMap::new(), HashMap::new())
     }
 
     /// Removes all the translations that are equal to the default translation.
+    #[deprecated(since = "2.2.0", note = "Use `builder` instead")]
     pub fn deduplicate(&self, language: &mut HashMap<String, Category>) {
         language.retain(|category_name, category| {
             category.retain(|key, value| {
@@ -165,7 +176,9 @@ impl I18n {
     }
 
     /// Removes all the translations that are equal to the default translation from all languages managed by this instance.
+    #[deprecated(since = "2.2.0", note = "Use `builder` instead")]
     pub fn deduplicate_all(&mut self) {
+        #[allow(deprecated)]
         for language in self.languages.values_mut() {
             match language {
                 Language::Link(_) => {}
@@ -181,6 +194,7 @@ impl I18n {
     /// If check_link is `true` and the language is a link, it will check if the language exists.
     ///
     /// If deduplicate is `true`, translations and categories equal to the default language will be removed.
+    #[deprecated(since = "2.2.0", note = "Use `builder` instead")]
     pub fn from_str(
         &mut self,
         language: &str,
@@ -188,6 +202,7 @@ impl I18n {
         check_link: bool,
         deduplicate: bool,
     ) -> Result<()> {
+        #[allow(deprecated)]
         if let Some(link) = data.strip_prefix("_link:") {
             if check_link && !self.languages.contains_key(link) {
                 return Err(Error::LanguageNotFound(link.to_owned()));
@@ -225,6 +240,7 @@ impl I18n {
     /// ## Notes
     ///
     /// This function can't check if the language is a link, so it will always parse the data as a language.
+    #[deprecated(since = "2.2.0", note = "Use `builder` instead")]
     pub fn from_reader<R: Read>(
         &mut self,
         language: &str,
@@ -238,6 +254,7 @@ impl I18n {
         let mut parsed_language = simd_json::from_reader(reader).map_err(Error::SimdJson)?;
 
         if deduplicate {
+            #[allow(deprecated)]
             self.deduplicate(&mut parsed_language);
         }
 
@@ -253,6 +270,7 @@ impl I18n {
     /// If check_link is `true` and the language is a link, it will check if the language exists.
     ///
     /// If deduplicate is `true`, translations and categories equal to the default language will be removed.
+    #[deprecated(since = "2.2.0", note = "Use `builder` instead")]
     pub fn from_slice(
         &mut self,
         language: &str,
@@ -260,6 +278,7 @@ impl I18n {
         check_link: bool,
         deduplicate: bool,
     ) -> Result<()> {
+        #[allow(deprecated)]
         if let Some(link) = data.strip_prefix("_link:".as_bytes()) {
             let link_str = std::str::from_utf8(link).map_err(Error::Utf8)?;
 
@@ -295,6 +314,7 @@ impl I18n {
     /// ## Arguments
     ///
     /// If deduplicate is `true`, translations and categories equal to the default language will be removed.
+    #[deprecated(since = "2.2.0", note = "Use `builder` instead")]
     pub fn from_value(
         &mut self,
         language: &str,
@@ -304,6 +324,7 @@ impl I18n {
         let mut parsed_language = serde_json::from_value(data)?;
 
         if deduplicate {
+            #[allow(deprecated)]
             self.deduplicate(&mut parsed_language);
         }
 
@@ -325,6 +346,7 @@ impl I18n {
     /// ## Notes
     ///
     /// This function will fail if the language is a link.
+    #[deprecated(since = "2.2.0", note = "Use `builder` instead")]
     pub fn set_default(&mut self, language: &str, deduplicate: bool) -> bool {
         let Some(Language::Data(language)) = ({
             if deduplicate {
@@ -345,6 +367,7 @@ impl I18n {
     /// ## Arguments
     ///
     /// If deduplicate is `true`, translations and categories equal to the default language will be removed.
+    #[deprecated(since = "2.2.0", note = "Use `builder` instead")]
     pub fn from_file<P: AsRef<Path>>(
         &mut self,
         language: &str,
@@ -353,6 +376,7 @@ impl I18n {
     ) -> Result<()> {
         let file = File::open(path).map_err(Error::Io)?;
         let buffered_reader = BufReader::new(file);
+        #[allow(deprecated)]
         self.from_reader(language, buffered_reader, deduplicate)
     }
 
@@ -367,7 +391,9 @@ impl I18n {
     /// When loading a language, the file name will be used as the language name.
     ///
     /// All files loaded will be parsed as languages, ignoring links.
+    #[deprecated(since = "2.2.0", note = "Use `builder` instead")]
     pub fn from_dir<P: AsRef<Path>>(&mut self, path: P, deduplicate: bool) -> Result<()> {
+        #[allow(deprecated)]
         for entry in (path.as_ref().read_dir().map_err(Error::Io)?).flatten() {
             let path = entry.path();
             if let Some(language) = path
@@ -394,12 +420,14 @@ impl I18n {
     /// When loading a language, the file name will be used as the language name.
     ///
     /// This function considers the file extension as your content type, *.json for languages and *.link for links.
+    #[deprecated(since = "2.2.0", note = "Use `builder` instead")]
     pub fn from_dir_with_links<P: AsRef<Path>>(
         &mut self,
         path: P,
         check_link: bool,
         deduplicate: bool,
     ) -> Result<()> {
+        #[allow(deprecated)]
         for entry in (path.as_ref().read_dir().map_err(Error::Io)?).flatten() {
             let path = entry.path();
 
@@ -494,6 +522,7 @@ impl I18n {
     }
 
     /// Removes all the links that points to another link or to a language that doesn't exist.
+    #[deprecated(since = "2.2.0", note = "Use `builder` instead")]
     pub fn cleanup_links(&mut self) {
         let mut languages = HashMap::new();
         let mut link_languages = Vec::new();
@@ -641,6 +670,7 @@ impl I18n {
     /// Internally uses [tokio::task::spawn_blocking] to load and parse the file.
     ///
     /// Deduplication can't be done in another thread using Tokio, so it will be executed in the current thread.
+    #[deprecated(since = "2.2.0", note = "Use `new_with_default_and_languages` instead")]
     pub async fn tokio_from_file<P: AsRef<Path> + std::marker::Send + 'static>(
         &mut self,
         language: &str,
@@ -663,6 +693,7 @@ impl I18n {
         .map_err(Error::Tokio)??;
 
         if deduplicate {
+            #[allow(deprecated)]
             self.deduplicate(&mut parsed_language);
         }
 
@@ -687,11 +718,13 @@ impl I18n {
     /// Internally uses [tokio::task::spawn_blocking] to load and parse the file.
     ///
     /// Deduplication can't be done in another thread using Tokio, so it will be executed in the current thread.
+    #[deprecated(since = "2.2.0", note = "Use `new_with_default_and_languages` instead")]
     pub async fn tokio_from_dir<P: AsRef<Path>>(
         &mut self,
         path: P,
         deduplicate: bool,
     ) -> Result<()> {
+        #[allow(deprecated)]
         for entry in (path.as_ref().read_dir().map_err(Error::Io)?).flatten() {
             let path = entry.path();
             if let Some(language) = path
@@ -722,12 +755,14 @@ impl I18n {
     /// Internally uses [tokio::task::spawn_blocking] to load and parse the file.
     ///
     /// Deduplication can't be done in another thread using Tokio, so it will be executed in the current thread.
+    #[deprecated(since = "2.2.0", note = "Use `builder` instead")]
     pub async fn tokio_from_dir_with_links<P: AsRef<Path>>(
         &mut self,
         path: P,
         check_link: bool,
         deduplicate: bool,
     ) -> Result<()> {
+        #[allow(deprecated)]
         for entry in (path.as_ref().read_dir().map_err(Error::Io)?).flatten() {
             let path = entry.path();
 
@@ -770,10 +805,15 @@ impl I18n {
 }
 
 /// Removes all the translations that are equal to the base language.
+#[deprecated(
+    since = "2.2.0",
+    note = "There's no need to deduplicate languages anymore, use `builder` instead"
+)]
 fn deduplicate_language(
     base: &HashMap<String, Category>,
     deduplicating: &mut HashMap<String, Category>,
 ) {
+    #[allow(deprecated)]
     deduplicating.retain(|category_name, category| {
         category.retain(|key, value| {
             if let Some(default_translation) = resolve_translation(base, category_name, key) {
@@ -790,6 +830,7 @@ fn deduplicate_language(
 }
 
 /// Resolves category and key to a translation without getting the ownership.
+#[deprecated(since = "2.2.0", note = "Use `builders::resolve_translation` instead")]
 fn resolve_translation<'a>(
     language: &'a HashMap<String, Category>,
     category: &str,
