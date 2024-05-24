@@ -46,7 +46,7 @@ impl I18nBuilder {
 
     /// Sets the default language.
     pub fn set_default_language(mut self, language: &str) -> Self {
-        self.default_language = language.to_owned();
+        language.clone_into(&mut self.default_language);
         self
     }
 
@@ -60,12 +60,12 @@ impl I18nBuilder {
         if let Some(link_content) = string.strip_prefix("_link:") {
             Ok(self.add_link(language, link_content))
         } else {
-            Ok(self.add_language(language, from_str(string)?))
+            Ok(self.add_language(language, from_str(&mut language.to_owned())?))
         }
     }
 
     /// Adds a language from a slice.
-    pub fn add_from_slice(self, language: &str, slice: &[u8]) -> Result<Self> {
+    pub fn add_from_slice(self, language: &str, slice: &mut [u8]) -> Result<Self> {
         let mut temp_buffer = [0; 6];
 
         if slice.len() < 6 {
