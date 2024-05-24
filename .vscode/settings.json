@@ -1,12 +1,13 @@
 {
-    "cSpell.words": [
-        "docsrs",
-        "hydrolink",
-        "Nashira",
-        "struct"
-    ],
-    "rust-analyzer.cargo.features": [
-        "serenity",
-        "tokio"
-    ]
+  "cSpell.words": [
+    "docsrs",
+    "hydrolink",
+    "Nashira",
+    "serde",
+    "simd",
+    "simdjson",
+    "struct",
+    "tokio"
+  ],
+  "rust-analyzer.cargo.features": ["serenity", "tokio"]
 }
