@@ -1,12 +1,13 @@
 # Hydrogen I18n // Changelog
 
-## [Unreleased]
+## [2.2.0] - 2024-06-11
 
 ### Added
 
 - Create `I18nBuilder` struct.
+- Create `TokioI18nBuilder` struct.
 - Create `Error::InvalidFileName` variant.
-- Create `builders::from_*` to wrap `serde_json` and `simdjson`.
+- Create `parsers` module to wrap `serde_json` and `simd_json`.
 
 ## Changed
 
@@ -14,8 +15,8 @@
 - Deprecate `I18n::new*`, use `I18nBuilder` instead.
 - Deprecate `I18n::set_default`, use `I18nBuilder` instead.
 - Deprecate `I18n::cleanup_links`, use `I18nBuilder` instead.
+- Deprecate `I18n` Tokio-based functions, use `TokioI18nBuilder` instead.
 - Deprecate private `deduplicate_language`, not necessary anymore.
-- Deprecate private `resolve_translation`, use `builders::resolve_translation`.
 
 ## [2.1.0] - 2024-05-11
 
