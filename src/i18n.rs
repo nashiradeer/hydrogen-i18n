@@ -1,6 +1,8 @@
 //! Translation manager, used to load and manage all languages in the memory.
 
 use std::{collections::{hash_map, HashMap}, fs::File, io::{BufReader, Read}, path::Path};
+
+#[allow(deprecated)]
 use crate::{builders, deduplicate_language, Category, Error, Language, Result};
 
 #[cfg(feature = "serenity")]
