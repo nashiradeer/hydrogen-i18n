@@ -31,8 +31,7 @@
 use std::{
     collections::HashMap,
     fmt::{self, Display, Formatter},
-    io,
-    result,
+    io, result,
 };
 
 pub mod builders;

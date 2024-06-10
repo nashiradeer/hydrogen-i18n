@@ -2,15 +2,19 @@
 
 //! Synchronous builder for [`I18n`] struct.
 
-use std::{
-    collections::HashMap,
-    path::Path,
-    str::from_utf8,
-};
 use async_recursion::async_recursion;
-use tokio::{fs::File, io::{AsyncRead, AsyncReadExt, BufReader}, sync::RwLock, task::spawn_blocking};
+use std::{collections::HashMap, path::Path, str::from_utf8};
+use tokio::{
+    fs::File,
+    io::{AsyncRead, AsyncReadExt, BufReader},
+    sync::RwLock,
+    task::spawn_blocking,
+};
 
-use crate::{parsers::{parse_from_slice, parse_from_str}, resolve_translation, Category, Error, I18n, Language, Result};
+use crate::{
+    parsers::{parse_from_slice, parse_from_str},
+    resolve_translation, Category, Error, I18n, Language, Result,
+};
 
 /// [`I18n`] builder.
 pub struct TokioI18nBuilder {
@@ -34,17 +38,26 @@ impl TokioI18nBuilder {
 
     /// Adds a language to the builder.
     pub async fn add_language(&self, language: &str, categories: HashMap<String, Category>) {
-      self.languages.write().await.insert(language.to_owned(), categories);
+        self.languages
+            .write()
+            .await
+            .insert(language.to_owned(), categories);
     }
 
     /// Adds a link to the builder.
     pub async fn add_link(&self, language: &str, link: &str) {
-        self.links.write().await.insert(language.to_owned(), link.to_owned());
+        self.links
+            .write()
+            .await
+            .insert(language.to_owned(), link.to_owned());
     }
 
     /// Sets the default language.
     pub async fn set_default_language(&self, language: &str) {
-      self.default_language.write().await.clone_from(&language.to_owned());
+        self.default_language
+            .write()
+            .await
+            .clone_from(&language.to_owned());
     }
 
     /// Gets the default language.
@@ -57,7 +70,9 @@ impl TokioI18nBuilder {
         if let Some(link_content) = string.strip_prefix("_link:") {
             self.add_link(language, link_content).await;
         } else {
-            let json = spawn_blocking(move || parse_from_str(&mut string)).await.map_err(Error::Tokio)??;
+            let json = spawn_blocking(move || parse_from_str(&mut string))
+                .await
+                .map_err(Error::Tokio)??;
 
             self.add_language(language, json).await;
         }
@@ -70,8 +85,10 @@ impl TokioI18nBuilder {
         let mut temp_buffer = [0; 6];
 
         if slice.len() < 6 {
-            let json = spawn_blocking(move || parse_from_slice(&mut slice)).await.map_err(Error::Tokio)??;
-        
+            let json = spawn_blocking(move || parse_from_slice(&mut slice))
+                .await
+                .map_err(Error::Tokio)??;
+
             self.add_language(language, json).await;
 
             return Ok(());
@@ -86,18 +103,24 @@ impl TokioI18nBuilder {
 
             self.add_link(language, link_content).await;
         } else {
-          let json = spawn_blocking(move || parse_from_slice(&mut slice)).await.map_err(Error::Tokio)??;
-          
-          self.add_language(language, json).await;
+            let json = spawn_blocking(move || parse_from_slice(&mut slice))
+                .await
+                .map_err(Error::Tokio)??;
+
+            self.add_language(language, json).await;
         }
 
         Ok(())
     }
 
     /// Adds a language from a reader.
-    /// 
+    ///
     /// Different from the synchronous version, this method stores the reader's content in a buffer before parsing it.
-    pub async fn add_from_reader<R: AsyncRead + Unpin>(&self, language: &str, mut reader: R) -> Result<()> {
+    pub async fn add_from_reader<R: AsyncRead + Unpin>(
+        &self,
+        language: &str,
+        mut reader: R,
+    ) -> Result<()> {
         let mut buffer = Vec::new();
         reader.read_to_end(&mut buffer).await.map_err(Error::Io)?;
         self.add_from_slice(language, buffer).await
@@ -160,7 +183,7 @@ impl TokioI18nBuilder {
     }
 
     /// Gets the languages.
-    /// 
+    ///
     /// Different from the synchronous version, this method returns a clone of the languages to avoid returning the lock guard.
     pub async fn get_languages(&self) -> HashMap<String, HashMap<String, Category>> {
         self.languages.read().await.clone()

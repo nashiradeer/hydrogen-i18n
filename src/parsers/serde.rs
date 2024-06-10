@@ -1,7 +1,7 @@
 //! Hydrogen I18n's Language parser using [serde_json](https://docs.serde.rs/serde_json/).
 
-use std::{collections::HashMap, io::Read};
 use crate::{Category, Error, Result};
+use std::{collections::HashMap, io::Read};
 
 /// Deserializes a JSON reader into a language.
 pub fn parse_from_reader<R: Read>(reader: R) -> Result<HashMap<String, Category>> {

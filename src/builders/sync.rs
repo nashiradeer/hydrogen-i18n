@@ -8,7 +8,10 @@ use std::{
     str::from_utf8,
 };
 
-use crate::{parsers::{parse_from_reader, parse_from_slice, parse_from_str}, resolve_translation, Category, Error, I18n, Language, Result};
+use crate::{
+    parsers::{parse_from_reader, parse_from_slice, parse_from_str},
+    resolve_translation, Category, Error, I18n, Language, Result,
+};
 
 /// [`I18n`] builder.
 pub struct I18nBuilder {

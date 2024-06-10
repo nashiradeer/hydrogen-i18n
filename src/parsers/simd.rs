@@ -1,8 +1,8 @@
 //! Hydrogen I18n's Language parser using [simd-json](https://docs.rs/simd-json/).
 
+use crate::{Category, Error, Result};
 use std::collections::HashMap;
 use std::io::Read;
-use crate::{Category, Error, Result};
 
 /// Deserializes a JSON reader into a language.
 pub fn parse_from_reader<R: Read>(reader: R) -> Result<HashMap<String, Category>> {
