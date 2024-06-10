@@ -9,7 +9,7 @@
 - Create `Error::InvalidFileName` variant.
 - Create `parsers` module to wrap `serde_json` and `simd_json`.
 
-## Changed
+### Changed
 
 - Deprecate `I18n::from_*`, use `I18nBuilder` instead.
 - Deprecate `I18n::new*`, use `I18nBuilder` instead.
