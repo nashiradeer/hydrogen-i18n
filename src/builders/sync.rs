@@ -8,9 +8,7 @@ use std::{
     str::from_utf8,
 };
 
-use crate::{Category, Error, I18n, Language, Result};
-
-use super::{from_reader, from_slice, from_str, resolve_translation};
+use crate::{parsers::{parse_from_reader, parse_from_slice, parse_from_str}, resolve_translation, Category, Error, I18n, Language, Result};
 
 /// [`I18n`] builder.
 pub struct I18nBuilder {
@@ -60,7 +58,7 @@ impl I18nBuilder {
         if let Some(link_content) = string.strip_prefix("_link:") {
             Ok(self.add_link(language, link_content))
         } else {
-            Ok(self.add_language(language, from_str(&mut language.to_owned())?))
+            Ok(self.add_language(language, parse_from_str(&mut language.to_owned())?))
         }
     }
 
@@ -69,7 +67,7 @@ impl I18nBuilder {
         let mut temp_buffer = [0; 6];
 
         if slice.len() < 6 {
-            return Ok(self.add_language(language, from_slice(slice)?));
+            return Ok(self.add_language(language, parse_from_slice(slice)?));
         }
 
         temp_buffer.copy_from_slice(&slice[..6]);
@@ -81,7 +79,7 @@ impl I18nBuilder {
 
             Ok(self.add_link(language, link_content))
         } else {
-            Ok(self.add_language(language, from_slice(slice)?))
+            Ok(self.add_language(language, parse_from_slice(slice)?))
         }
     }
 
@@ -93,7 +91,7 @@ impl I18nBuilder {
             if e.kind() == std::io::ErrorKind::UnexpectedEof {
                 reader.seek(SeekFrom::Start(0)).map_err(Error::Io)?;
 
-                return Ok(self.add_language(language, from_reader(reader)?));
+                return Ok(self.add_language(language, parse_from_reader(reader)?));
             } else {
                 return Err(Error::Io(e));
             }
@@ -111,7 +109,7 @@ impl I18nBuilder {
         } else {
             reader.seek(SeekFrom::Start(0)).map_err(Error::Io)?;
 
-            Ok(self.add_language(language, from_reader(reader)?))
+            Ok(self.add_language(language, parse_from_reader(reader)?))
         }
     }
 
