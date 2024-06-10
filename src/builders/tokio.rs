@@ -86,10 +86,7 @@ impl TokioI18nBuilder {
 
             self.add_link(language, link_content).await;
         } else {
-
-          let mut buffer = Vec::from(slice);
-
-          let json = spawn_blocking(move || parse_from_slice(&mut buffer)).await.map_err(Error::Tokio)??;
+          let json = spawn_blocking(move || parse_from_slice(&mut slice)).await.map_err(Error::Tokio)??;
           
           self.add_language(language, json).await;
         }
