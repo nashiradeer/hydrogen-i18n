@@ -9,5 +9,5 @@
     "struct",
     "tokio"
   ],
-  "rust-analyzer.cargo.features": ["serenity", "tokio"]
+  "rust-analyzer.cargo.features": ["serenity", "tokio", "simd"]
 }
