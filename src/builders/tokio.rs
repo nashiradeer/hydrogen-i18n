@@ -146,7 +146,10 @@ impl TokioI18nBuilder {
     ///
     /// This will add all files in the directory and its subdirectories.
     #[async_recursion]
-    pub async fn add_from_dir<P: AsRef<Path> + Send>(&self, path: P) -> Result<()> {
+    pub async fn add_from_dir<P>(&self, path: P) -> Result<()>
+    where
+        P: AsRef<Path> + Send,
+    {
         let path = path.as_ref();
 
         for entry in (path.read_dir().map_err(Error::Io)?).flatten() {
