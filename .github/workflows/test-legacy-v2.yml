@@ -1,10 +1,10 @@
-name: Test
+name: Test - Legacy v2
 
 on:
   push:
-    branches: ["main"]
+    branches: ["legacy/v2"]
   pull_request:
-    branches: ["main"]
+    branches: ["legacy/v2"]
   workflow_dispatch:
 
 env:
