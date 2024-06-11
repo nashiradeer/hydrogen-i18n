@@ -1,6 +1,6 @@
 # Nashira Deer // Hydrogen I18n
 
-Translation utilities for server-side applications that need to deal with different languages at the same time.
+Translation utilities for applications that need to deal with different languages.
 
 [![PayPal](https://img.shields.io/badge/Paypal-003087?style=for-the-badge&logo=paypal&logoColor=%23fff)
 ](https://www.paypal.com/donate/?business=QQGMTC3FQAJF6&no_recurring=0&item_name=Thanks+for+donating+for+me%2C+this+helps+me+a+lot+to+continue+developing+and+maintaining+my+projects.&currency_code=USD)
@@ -11,7 +11,7 @@ Translation utilities for server-side applications that need to deal with differ
 [![docs.rs](https://img.shields.io/docsrs/hydrogen-i18n?style=for-the-badge&logo=docsdotrs&logoColor=%23fff&label=Docs.rs&labelColor=%23000&color=%23000)
 ](https://docs.rs/hydrogen-i18n/)
 
-Server-side applications that deal directly with users will need to be prepared to deal with different languages too, so Hydrogen I18n comes with utilities focused on making this task easier, loading and managing all the languages supported by the application in the memory, avoiding unnecessary disk and CPU usage.
+Applications that deal directly with users will need to be prepared to deal with different languages too, so Hydrogen I18n comes with utilities focused on making this task easier, loading and managing single or multiple languages supported by the application in the memory, avoiding unnecessary disk and CPU usage.
 
 Hydrogen I18n is part of [Hydrogen Framework](https://github.com/users/nashiradeer/projects/8), this means that this crate is designed to be used on Discord bots created using [serenity](https://crates.io/crates/serenity) and [twilight](https://crates.io/crates/twilight), but is sufficiently generic to be used by any other application that does not use these Discord libraries or even Discord bots.
 
