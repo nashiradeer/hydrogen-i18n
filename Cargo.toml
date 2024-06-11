@@ -5,6 +5,7 @@ authors = ["Nashira Deer <nashiradeer@gmail.com>"]
 edition = "2021"
 description = "Translation utilities for server-side applications that need to deals with different languages on the same time."
 repository = "https://github.com/nashiradeer/hydrogen-i18n"
+documentation = "https://docs.rs/hydrogen-i18n"
 readme = "README.md"
 license = "MIT"
 keywords = ["hydrogen", "i18n", "language", "l10n", "translation"]
