@@ -1,16 +1,16 @@
 [package]
 name = "hydrogen-i18n"
-version = "2.2.0"
+version = "3.0.0"
 authors = ["Nashira Deer <nashiradeer@gmail.com>"]
 edition = "2021"
-description = "Translation utilities for server-side applications that need to deals with different languages on the same time."
+description = "Translation utilities for applications that need to deals with different languages."
 repository = "https://github.com/nashiradeer/hydrogen-i18n"
 documentation = "https://docs.rs/hydrogen-i18n"
 readme = "README.md"
 license = "MIT"
 keywords = ["hydrogen", "i18n", "language", "l10n", "translation"]
 categories = ["internationalization", "localization"]
-rust-version = "1.75"
+rust-version = "1.78"
 
 [features]
 default = []
@@ -20,22 +20,22 @@ simd = ["dep:simd-json"]
 async = ["dep:async-recursion"]
 
 [dependencies]
-serde_json = "1.0.99"
+serde_json = "1.0.117"
 
 [dependencies.serenity]
-version = "0.12.0"
+version = "0.12.2"
 optional = true
 default-features = false
 features = ["builder"]
 
 [dependencies.tokio]
-version = "1.35.1"
+version = "1.38.0"
 optional = true
 default-features = false
 features = ["fs"]
 
 [dependencies.simd-json]
-version = "0.13.7"
+version = "0.13.10"
 optional = true
 features = ["serde_impl"]
 
