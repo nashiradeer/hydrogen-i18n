@@ -1,15 +1,15 @@
-name: Test
+name: Test - Legacy v2
 
 on:
   push:
-    branches: ["main"]
+    branches: ["legacy/v2"]
   pull_request:
-    branches: ["main"]
+    branches: ["legacy/v2"]
   workflow_dispatch:
 
 env:
   CARGO_TERM_COLOR: always
-  RUST_VERSION: "1.78"
+  RUST_VERSION: "1.75"
 
 jobs:
   test:
