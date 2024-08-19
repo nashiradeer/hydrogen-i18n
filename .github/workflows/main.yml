@@ -1,20 +1,20 @@
-name: Check - Legacy v2
+name: Main workflow
 
 on:
   push:
-    branches: ["legacy/v2"]
+    branches: ["main"]
   pull_request:
-    branches: ["legacy/v2"]
+    branches: ["main"]
   workflow_dispatch:
 
 env:
   CARGO_TERM_COLOR: always
-  RUST_VERSION: "1.75"
+  RUST_VERSION: "1.80"
 
 jobs:
   check:
+    name: Check syntax
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v4
       - name: Install Rust ${{ env.RUST_VERSION }}
@@ -31,3 +31,16 @@ jobs:
         run: cargo clippy --config 'build.rustflags = ["-Dwarnings"]'
       - name: Run Clippy with all features
         run: cargo clippy --config 'build.rustflags = ["-Dwarnings"]' --all-features
+  test:
+    name: Run tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust ${{ env.RUST_VERSION }}
+        run: rustup install ${{ env.RUST_VERSION }}
+      - name: Set Rust  ${{ env.RUST_VERSION }} as default
+        run: rustup default ${{ env.RUST_VERSION }}
+      - name: Test with default features
+        run: cargo test
+      - name: Test with all features
+        run: cargo test --all-features
