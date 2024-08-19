@@ -1,0 +1,27 @@
+{
+  "name": "Rust over Alpine",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".."
+  },
+  "features": {
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "installZsh": "true",
+      "username": "vscode",
+      "userUid": "1000",
+      "userGid": "1000",
+      "upgradePackages": "true"
+    }
+  },
+  "remoteUser": "vscode",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "tamasfe.even-better-toml",
+        "fill-labs.dependi",
+        "rust-lang.rust-analyzer"
+      ]
+    }
+  },
+  "postCreateCommand": "rustup component add clippy"
+}
