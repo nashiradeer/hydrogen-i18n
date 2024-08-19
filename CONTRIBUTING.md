@@ -8,7 +8,7 @@ After finishing your changes on your branch, create a Pull Request to the `main`
 
 Please, don't forget to log your changes in the [CHANGELOG.md file](CHANGELOG.md) following the [Keep a changelog v1.1.0](https://keepachangelog.com/en/1.1.0/) before making the Pull Request.
 
-Hydrogen I18n uses Rust v1.75, make sure you are using this version before making any changes.
+Hydrogen I18n uses Rust v1.80, make sure you are using this version before making any changes.
 
 ## Standards and conventions
 
@@ -33,7 +33,7 @@ This project uses a modified version of it that considers the differences betwee
 
 Commit scopes describe what has been affected by the commit, below is a list of scopes used in this repository:
 
-*This project does not have scopes.*
+_This project does not have scopes._
 
 You can omit the scope (example `feat: create new module for ...`) if your commit there's no scope documented or is from other types that don't `feat`, `fix`, and `refactor`.
 
