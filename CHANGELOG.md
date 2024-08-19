@@ -1,5 +1,7 @@
 # Hydrogen I18n // Changelog
 
+## [Unreleased]
+
 ## [2.2.0] - 2024-06-10
 
 ### Added
