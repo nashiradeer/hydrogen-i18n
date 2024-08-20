@@ -21,7 +21,7 @@ all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
 [dependencies]
-toml = "0.8.19"
+toml = { version = "0.8.19", features = ["parse"] }
 serde = { version = "1.0.208", features = ["derive"] }
 
 [dependencies.tokio]
