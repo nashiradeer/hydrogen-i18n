@@ -12,6 +12,19 @@ keywords = ["i18n", "language", "l10n", "translation", "internationalization"]
 categories = ["internationalization", "localization"]
 rust-version = "1.80"
 
+[features]
+tokio = ["dep:tokio"]
+test-util = ["tokio/rt-multi-thread", "tokio/macros"]
+
 [package.metadata.docs.rs]
 all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
+
+[dependencies]
+toml = "0.8.19"
+serde = { version = "1.0.208", features = ["derive"] }
+
+[dependencies.tokio]
+version = "1.39.3"
+optional = true
+default-features = false
