@@ -23,5 +23,5 @@
       ]
     }
   },
-  "postCreateCommand": "rustup component add clippy"
+  "postCreateCommand": "./.devcontainer/setup.sh"
 }
