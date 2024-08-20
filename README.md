@@ -17,6 +17,11 @@ Hydrogen I18n is built to make handling multiple languages easy, intuitive, and 
 
 If this project helps you, consider donating. You can donate through Nashira Deer's [PayPal](https://www.paypal.com/donate/?business=QQGMTC3FQAJF6&no_recurring=0&item_name=Thanks+for+donating+for+me%2C+this+helps+me+a+lot+to+continue+developing+and+maintaining+my+projects.&currency_code=USD) or [GitHub Sponsor](https://github.com/sponsors/nashiradeer).
 
+## Features
+
+- `tokio`: Enables Tokio-based async functions.
+- `test-util`: Enables the necessary features to run the tests.
+
 ## Credits
 
 Hydrogen I18n is a Nashira Deer project licensed under the [MIT License](https://github.com/nashiradeer/hydrogen-i18n/blob/main/LICENSE.txt).

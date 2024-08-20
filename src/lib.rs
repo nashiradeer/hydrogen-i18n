@@ -8,5 +8,10 @@
 //! [![docs.rs](https://img.shields.io/docsrs/hydrogen-i18n?style=for-the-badge&logo=docsdotrs&logoColor=%23fff&label=Docs.rs&labelColor=%23000&color=%23000)](https://docs.rs/hydrogen-i18n/)
 //! 
 //! Hydrogen I18n is built to make handling multiple languages easy, intuitive, and fast as it loads everything in memory, avoiding disk and CPU overhead during the application execution, but it can also be used to load a single language for use in client-side applications, you can also share the translation files with other projects in other languages as the language files don't have a proprietary or Rust-specific format.
+//! 
+//! ## Features
+//! 
+//! - `tokio`: Enables Tokio-based async functions.
+//! - `test-util`: Enables the necessary features to run the tests.
 
 #![warn(missing_docs)]
