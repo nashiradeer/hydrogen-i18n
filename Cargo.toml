@@ -28,3 +28,4 @@ serde = { version = "1.0.208", features = ["derive"] }
 version = "1.39.3"
 optional = true
 default-features = false
+features = ["fs"]
