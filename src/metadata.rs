@@ -89,12 +89,10 @@ impl MetadataBuilder {
 
     /// Parse the metadata from a file.
     pub fn from_file<P: AsRef<Path>>(path: P) -> Option<Self> {
-        toml::from_str(&read_to_string(path.as_ref()).ok()?)
-            .ok()
-            .map(|mut m: MetadataBuilder| {
-                m.file = Some(path.as_ref().to_path_buf());
-                m
-            })
+        Self::from_str(&read_to_string(path.as_ref()).ok()?).map(|mut m| {
+            m.file = Some(path.as_ref().to_path_buf());
+            m
+        })
     }
 
     /// Parse the metadata from all the files in a directory.
