@@ -98,10 +98,10 @@ impl MetadataBuilder {
     }
 
     /// Parse the metadata from all the files in a directory.
-    pub fn from_dir<P: AsRef<Path>>(path: P) -> Vec<Option<Self>> {
+    pub fn from_dir<P: AsRef<Path>>(path: P) -> Vec<Self> {
         search_files(path)
-            .iter()
-            .map(|path| Self::from_file(path))
+            .into_iter()
+            .filter_map(|path| Self::from_file(path))
             .collect()
     }
 }
@@ -123,13 +123,14 @@ impl MetadataBuilder {
     }
 
     /// Parse the metadata from all the files in a directory asynchronously using [`tokio`].
-    pub async fn tokio_from_dir<P: AsRef<Path>>(path: P) -> Vec<Option<Self>> {
+    pub async fn tokio_from_dir<P: AsRef<Path>>(path: P) -> Vec<Self> {
         let files = crate::utils::tokio_search_files(path).await;
         let mut metadata = Vec::with_capacity(files.len());
 
         for file in &files {
-            let file = file.clone();
-            metadata.push(Self::tokio_from_file(file).await);
+            if let Some(m) = Self::tokio_from_file(file).await {
+                metadata.push(m);
+            }
         }
 
         metadata.shrink_to_fit();
