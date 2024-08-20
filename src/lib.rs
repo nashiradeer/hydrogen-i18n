@@ -15,5 +15,8 @@
 //! - `test-util`: Enables the necessary features to run the tests.
 
 #![warn(missing_docs)]
+#![cfg_attr(docsrs, feature(doc_cfg))]
 
 pub mod metadata;
+
+mod utils;
