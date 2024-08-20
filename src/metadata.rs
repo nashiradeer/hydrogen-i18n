@@ -8,11 +8,11 @@ use serde::Deserialize;
 #[derive(Debug, Clone, PartialEq, Deserialize)]
 pub struct Metadata {
     /// The language code.
-    pub code: Option<String>,
+    code: Option<String>,
     /// The language name in the language itself.
-    pub name: Option<String>,
+    name: Option<String>,
     /// Is some if this language is a link to another one.
-    pub link: Option<String>,
+    link: Option<String>,
 }
 
 impl Metadata {
