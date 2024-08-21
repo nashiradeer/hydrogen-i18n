@@ -14,7 +14,7 @@ rust-version = "1.80"
 
 [features]
 tokio = ["dep:tokio"]
-test-util = ["tokio/rt-multi-thread", "tokio/macros"]
+test-util = ["tokio/rt-multi-thread", "tokio/macros", "tokio"]
 
 [package.metadata.docs.rs]
 all-features = true
@@ -29,3 +29,10 @@ version = "1.39.3"
 optional = true
 default-features = false
 features = ["fs", "rt"]
+
+[dev-dependencies]
+criterion = { version = "0.5.1", features = ["html_reports", "async_tokio"] }
+
+[[bench]]
+name = "metadata"
+harness = false
