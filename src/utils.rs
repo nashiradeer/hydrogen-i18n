@@ -14,14 +14,12 @@ pub fn search_files<A: AsRef<Path>>(path: A) -> Vec<PathBuf> {
 
     while let Some(dir) = dirs.pop() {
         if let Ok(entries) = read_dir(dir) {
-            for entry in entries {
-                if let Ok(entry) = entry {
-                    let path = entry.path();
-                    if path.is_dir() {
-                        dirs.push(path);
-                    } else {
-                        files.push(path);
-                    }
+            for entry in entries.flatten() {
+                let path = entry.path();
+                if path.is_dir() {
+                    dirs.push(path);
+                } else {
+                    files.push(path);
                 }
             }
         }
@@ -39,14 +37,12 @@ pub async fn tokio_search_files<A: AsRef<Path>>(path: A) -> Vec<PathBuf> {
 
     while let Some(dir) = dirs.pop() {
         if let Ok(mut entries) = tokio::fs::read_dir(dir).await {
-            while let Ok(entry) = entries.next_entry().await {
-                if let Some(entry) = entry {
-                    let path = entry.path();
-                    if path.is_dir() {
-                        dirs.push(path);
-                    } else {
-                        files.push(path);
-                    }
+            while let Ok(Some(entry)) = entries.next_entry().await {
+                let path = entry.path();
+                if path.is_dir() {
+                    dirs.push(path);
+                } else {
+                    files.push(path);
                 }
             }
         }
