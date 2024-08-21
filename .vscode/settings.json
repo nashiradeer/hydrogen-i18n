@@ -1,6 +1,5 @@
 {
   "rust-analyzer.cargo.features": [
-    "tokio",
     "test-util"
   ]
 }
