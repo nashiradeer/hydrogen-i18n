@@ -83,24 +83,27 @@ impl MetadataBuilder {
     }
 
     /// Parse the metadata from a string.
-    pub fn from_str(s: &str) -> Option<Self> {
+    pub fn load_str(s: &str) -> Option<Self> {
         toml::from_str(s).ok()
     }
 
     /// Parse the metadata from a file.
-    pub fn from_file<P: AsRef<Path>>(path: P) -> Option<Self> {
-        Self::from_str(&read_to_string(path.as_ref()).ok()?).map(|mut m| {
+    pub fn load_file<P: AsRef<Path>>(path: P) -> Option<Self> {
+        Self::load_str(&read_to_string(path.as_ref()).ok()?).map(|mut m| {
             m.file = Some(path.as_ref().to_path_buf());
             m
         })
     }
 
     /// Parse the metadata from all the files in a directory.
-    pub fn from_dir<P: AsRef<Path>>(path: P) -> Vec<Self> {
-        search_files(path)
+    pub fn load_dir<P: AsRef<Path>>(path: P) -> Vec<Self> {
+        let mut metadatas = search_files(path)
             .into_iter()
-            .filter_map(|path| Self::from_file(path))
-            .collect()
+            .filter_map(Self::load_file)
+            .collect::<Vec<_>>();
+
+        metadatas.shrink_to_fit();
+        metadatas
     }
 }
 
@@ -108,10 +111,10 @@ impl MetadataBuilder {
 #[cfg_attr(docsrs, doc(cfg(feature = "tokio")))]
 impl MetadataBuilder {
     /// Parse the metadata from a file asynchronously using [`tokio`].
-    pub async fn tokio_from_file<P: AsRef<Path>>(path: P) -> Option<Self> {
+    pub async fn tokio_load_file<P: AsRef<Path>>(path: P) -> Option<Self> {
         let file_content = tokio::fs::read_to_string(path.as_ref()).await.ok()?;
 
-        tokio::task::spawn_blocking(move || Self::from_str(&file_content))
+        tokio::task::spawn_blocking(move || Self::load_str(&file_content))
             .await
             .ok()?
             .map(|mut m: MetadataBuilder| {
@@ -121,12 +124,12 @@ impl MetadataBuilder {
     }
 
     /// Parse the metadata from all the files in a directory asynchronously using [`tokio`].
-    pub async fn tokio_from_dir<P: AsRef<Path>>(path: P) -> Vec<Self> {
+    pub async fn tokio_load_dir<P: AsRef<Path>>(path: P) -> Vec<Self> {
         let files = crate::utils::tokio_search_files(path).await;
         let mut metadata = Vec::with_capacity(files.len());
 
         for file in &files {
-            if let Some(m) = Self::tokio_from_file(file).await {
+            if let Some(m) = Self::tokio_load_file(file).await {
                 metadata.push(m);
             }
         }
