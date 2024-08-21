@@ -19,4 +19,4 @@
 
 pub mod metadata;
 
-mod utils;
+pub mod utils;
