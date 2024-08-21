@@ -1,0 +1,45 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug test 'metadata'",
+      "cargo": {
+        "args": [
+          "test",
+          "--no-run",
+          "--test=metadata",
+          "--package=hydrogen-i18n",
+          "--features=test-util"
+        ],
+        "filter": {
+          "name": "metadata",
+          "kind": "test"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug bench 'metadata'",
+      "cargo": {
+        "args": [
+          "test",
+          "--no-run",
+          "--bench=metadata",
+          "--package=hydrogen-i18n",
+          "--features=test-util"
+        ],
+        "filter": {
+          "name": "metadata",
+          "kind": "bench"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    }
+  ]
+}
