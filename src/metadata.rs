@@ -13,7 +13,7 @@ use serde::Deserialize;
 use crate::utils::search_files;
 
 /// Metadata for the language file.
-#[derive(Debug, Clone, PartialEq, Deserialize, Default)]
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Default)]
 pub struct Metadata {
     /// The language code.
     code: Option<String>,
