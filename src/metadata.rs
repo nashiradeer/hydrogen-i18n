@@ -3,6 +3,7 @@
 //! Search and parse the metadata from the language files.
 
 use std::{
+    collections::HashMap,
     fs::read_to_string,
     path::{Path, PathBuf},
 };
@@ -12,7 +13,7 @@ use serde::Deserialize;
 use crate::utils::search_files;
 
 /// Metadata for the language file.
-#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Default)]
 pub struct Metadata {
     /// The language code.
     code: Option<String>,
@@ -23,6 +24,11 @@ pub struct Metadata {
 }
 
 impl Metadata {
+    /// Create a new empty metadata.
+    pub fn new() -> Self {
+        Self::default()
+    }
+
     /// Get the language code.
     pub fn code(&self) -> Option<&str> {
         self.code.as_deref()
@@ -136,5 +142,15 @@ impl MetadataBuilder {
 
         metadata.shrink_to_fit();
         metadata
+    }
+}
+
+impl From<HashMap<String, String>> for Metadata {
+    fn from(map: HashMap<String, String>) -> Self {
+        Self {
+            code: map.get("code").cloned(),
+            name: map.get("name").cloned(),
+            link: map.get("link").cloned(),
+        }
     }
 }
