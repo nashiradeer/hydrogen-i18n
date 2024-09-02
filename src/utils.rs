@@ -1,4 +1,4 @@
-//! Hydrogen I18n // Utils
+//! # Hydrogen I18n // Utils
 //!
 //! Utilities for the Hydrogen I18n library.
 

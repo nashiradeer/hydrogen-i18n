@@ -1,4 +1,4 @@
-//! Nashira Deer // Hydrogen I18n
+//! # Nashira Deer // Hydrogen I18n
 //!
 //! In-memory language loader and manager for client and server-side applications.
 //!
