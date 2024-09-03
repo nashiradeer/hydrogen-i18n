@@ -17,6 +17,6 @@
 #![warn(missing_docs)]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
+pub mod language;
 pub mod metadata;
-
 pub mod utils;
