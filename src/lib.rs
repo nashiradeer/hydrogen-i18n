@@ -1,4 +1,4 @@
-//! Nashira Deer // Hydrogen I18n
+//! # Nashira Deer // Hydrogen I18n
 //!
 //! In-memory language loader and manager for client and server-side applications.
 //!
@@ -17,6 +17,6 @@
 #![warn(missing_docs)]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
+pub mod language;
 pub mod metadata;
-
 pub mod utils;

@@ -1,3 +1,11 @@
 [_metadata]
 code = "en-CA"
 name = "English (Canada)"
+
+[hello]
+world = "Hello, world!"
+user = "Hello, {name}!"
+
+[whoami]
+name = "English"
+country = "Canada"

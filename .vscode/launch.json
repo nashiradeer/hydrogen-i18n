@@ -24,6 +24,26 @@
     {
       "type": "lldb",
       "request": "launch",
+      "name": "Debug test 'language'",
+      "cargo": {
+        "args": [
+          "test",
+          "--no-run",
+          "--test=language",
+          "--package=hydrogen-i18n",
+          "--features=test-util"
+        ],
+        "filter": {
+          "name": "language",
+          "kind": "test"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
       "name": "Debug bench 'metadata'",
       "cargo": {
         "args": [

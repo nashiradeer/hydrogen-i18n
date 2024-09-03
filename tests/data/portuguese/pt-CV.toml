@@ -1,3 +1,11 @@
 [_metadata]
 code = "pt-CV"
 name = "Português (Cabo Verde)"
+
+[hello]
+world = "Olá, mundo!"
+user = "Olá, {name}!"
+
+[whoami]
+name = "Português"
+country = "Cabo Verde"

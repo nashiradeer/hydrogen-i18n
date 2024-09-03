@@ -1,3 +1,11 @@
 [_metadata]
 code = "es-CU"
 name = "Español (Cuba)"
+
+[hello]
+world = "¡Hola, mundo!"
+user = "¡Hola, {name}!"
+
+[whoami]
+name = "Español"
+country = "Cuba"
