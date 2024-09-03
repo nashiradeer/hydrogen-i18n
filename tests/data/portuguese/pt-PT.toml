@@ -1,3 +1,11 @@
 [_metadata]
 code = "pt-PT"
 name = "Português (Portugal)"
+
+[hello]
+world = "Olá, mundo!"
+user = "Olá, {name}!"
+
+[whoami]
+name = "Português"
+country = "Portugal"
