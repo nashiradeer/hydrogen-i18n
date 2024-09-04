@@ -19,4 +19,5 @@
 
 pub mod language;
 pub mod metadata;
+pub mod multilanguage;
 pub mod utils;
