@@ -1,5 +1,7 @@
 # Nashira Deer // Hydrogen I18n
 
+**This repository has been moved to [Hydrogen Framework's repository](https://github.com/nashiradeer/hydrogen-framework).**
+
 In-memory language loader and manager for client and server-side applications.
 
 [![PayPal](https://img.shields.io/badge/Paypal-003087?style=for-the-badge&logo=paypal&logoColor=%23fff)
